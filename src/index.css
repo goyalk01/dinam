@@ -192,3 +192,8 @@
     @apply min-h-full;
   }
 }
+
+
+article{
+  @apply shadow-xl hover:shadow-gray-500/40 shadow-gray-500/30 dark:shadow-gray-700/10 dark:hover:shadow-gray-700/20 duration-200; 
+}
