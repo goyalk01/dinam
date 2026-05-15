@@ -34,7 +34,7 @@ Be respectful. Constructive feedback only. No harassment, gatekeeping, or dismis
 
 Never contributed to open source before? Start here:
 
-1. Look for issues labeled [`good first issue`](https://github.com/parasmani-dev/dinam/issues?q=is%3Aissue+label%3A%22good+first+issue%22)
+1. Look for issues labeled [`good first issue`](https://github.com/AshutoshDash1999/dinam/issues?q=is%3Aissue+label%3A%22good+first+issue%22)
 2. Comment on the issue to claim it before starting work
 3. Ask questions in the issue thread — that's what it's for
 4. Don't worry about perfection on your first PR; we'll guide you
@@ -230,7 +230,7 @@ PRs that fail lint or typecheck will not be merged.
 
 ## Reporting Bugs
 
-Open a [GitHub Issue](https://github.com/parasmani-dev/dinam/issues) and include:
+Open a [GitHub Issue](https://github.com/AshutoshDash1999/dinam/issues) and include:
 
 - Steps to reproduce
 - Expected vs actual behavior
@@ -241,7 +241,7 @@ Open a [GitHub Issue](https://github.com/parasmani-dev/dinam/issues) and include
 
 ## Requesting Features
 
-Open a [GitHub Issue](https://github.com/parasmani-dev/dinam/issues) and describe:
+Open a [GitHub Issue](https://github.com/AshutoshDash1999/dinam/issues) and describe:
 
 - The problem you're solving (not just the solution)
 - How it fits into a personal dashboard use-case
