@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 export function TasksSection() {
-    const { todos, toggleTodo, deleteTodo, addTodo, updateTodo } =
+    const { todos, toggleTodo, deleteTodo, addTodo, updateTodo, clearCompletedTodos } =
         useDashboardState()
+
+    const completedCount = todos.filter((t) => t.done).length
     const [newTaskLabel, setNewTaskLabel] = useState("")
     const [editingId, setEditingId] = useState<string | null>(null)
     const [editLabel, setEditLabel] = useState("")
@@ -50,6 +52,19 @@ export function TasksSection() {
         <article className="flex min-h-0 flex-col rounded-[1.75rem] bg-card p-6 shadow-md ring-1 ring-border/40 lg:p-7">
             <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
                 <h2 className={dashboardSectionLabelClassName}>Focus items</h2>
+                {completedCount > 0 && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto gap-1.5 py-1 text-xs text-muted-foreground hover:text-destructive"
+                        onClick={clearCompletedTodos}
+                        aria-label={`Clear ${completedCount} completed task${completedCount === 1 ? "" : "s"}`}
+                    >
+                        <Trash2 className="size-3.5" strokeWidth={2} aria-hidden />
+                        Clear completed ({completedCount})
+                    </Button>
+                )}
             </div>
             <div
                 className={cn(
