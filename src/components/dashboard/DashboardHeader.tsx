@@ -1,11 +1,9 @@
+"use client";
+
 import dayjs from "dayjs"
 import {
-    MessageSquare,
-    Mic,
     Moon,
     ScanSearch,
-    Search,
-    Settings,
     Sun,
 } from "lucide-react"
 import {
@@ -19,6 +17,12 @@ import {
     useSyncExternalStore,
 } from "react"
 
+// 1. IMPORTED ALL ANIMATION ICONS HERE
+import { SettingsIcon } from "@/components/animated-icons/settings-icon"
+import { MessageSquareIcon } from "@/components/animated-icons/message-square-icon"
+import { MicIcon } from "@/components/animated-icons/mic-icon"
+import { SearchIcon } from "@/components/animated-icons/search-icon"
+import { FileTextIcon } from "@/components/animated-icons/file-text-icon"
 import { DashboardSettingsModal } from "@/components/dashboard/DashboardSettingsModal"
 import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
@@ -29,6 +33,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { MOCK_WEATHER } from "@/data/dashboard-mock"
+import { cn } from "@/lib/utils"
 import {
     openGoogleSearchByImage,
     resolveNavigationHref,
@@ -200,7 +205,7 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
         () => getSpeechRecognitionCtor() !== undefined,
         [],
     )
-
+    const searchIconRef = useRef<{ startAnimation: () => void; stopAnimation: () => void }>(null);
     const timeWithPeriod = dayjs(now).format("h:mm A")
     const shortDateLine = dayjs(now).format("dddd, MMM D").toUpperCase()
     const greeting = timeOfDayGreeting(dayjs(now).hour())
@@ -275,17 +280,19 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                     {onOpenAssistant ? (
                         <Tooltip>
                             <TooltipTrigger asChild>
+                                {/* 1. Added the 'group' class here */}
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="rounded-full text-muted-foreground"
+                                    className="group rounded-full text-muted-foreground"
                                     aria-label="Open assistant"
                                     onClick={onOpenAssistant}
                                 >
-                                    <MessageSquare
-                                        className="size-5"
-                                        strokeWidth={2}
+                                    {/* 2. Replaced with new animated icon */}
+                                    <MessageSquareIcon
+                                        size={20} 
+                                        className="transition-colors group-hover:text-foreground"
                                     />
                                 </Button>
                             </TooltipTrigger>
@@ -296,15 +303,17 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                     ) : null}
                     <Tooltip>
                         <TooltipTrigger asChild>
+                            {/* 2. ADDED THE 'group' CLASS TO THIS BUTTON SO HOVER TRIPPLES TO THE CHILD ICON */}
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="rounded-full text-muted-foreground"
+                                className="group rounded-full text-muted-foreground"
                                 aria-label="Open settings"
                                 onClick={() => setSettingsOpen(true)}
                             >
-                                <Settings className="size-5" strokeWidth={2} />
+                                {/* 3. REPLACED STATIC <Settings /> WITH ANIMATED ICON */}
+                                <SettingsIcon size={20} className="transition-colors group-hover:text-foreground" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" sideOffset={6}>
@@ -324,11 +333,10 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                     {greeting}
                 </p>
 
-
                 <form
-                    className="relative mt-8 w-full max-w-xl sm:mt-10"
+                    className="group/search relative mt-8 w-full max-w-xl sm:mt-10" // 1. Added group/search here
                     onSubmit={handleSearchSubmit}
-                >
+>
                     <label htmlFor="dashboard-search" className="sr-only">
                         Search the web or type a URL
                     </label>
@@ -341,11 +349,19 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                         aria-hidden
                         onChange={handleImageSearchFile}
                     />
-                    <Search
-                        className="pointer-events-none absolute top-1/2 left-5 z-1 size-5 -translate-y-1/2 text-muted-foreground"
-                        strokeWidth={2}
+                    {/* 2. Wrapped the icon in a hover-catcher area that matches the left input spacing */}
+                    <div 
+                         className="absolute top-1/2 left-0 z-2 h-full w-14 -translate-y-1/2"
+                        onMouseEnter={() => searchIconRef.current?.startAnimation()}
+                         onMouseLeave={() => searchIconRef.current?.stopAnimation()}
+                    >
+                     <SearchIcon
+                        ref={searchIconRef}
+                        size={20} // 3. Added explicit sizing prop
+                        className="pointer-events-none absolute top-1/2 left-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-foreground group-hover/search:text-foreground"
                         aria-hidden
                     />
+                    </div>
                     <Input
                         id="dashboard-search"
                         name="q"
@@ -380,6 +396,7 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
+                                {/* 1. Added the 'group' class to let hover trigger down to the icon */}
                                 <Button
                                     type="button"
                                     variant="ghost"
@@ -387,7 +404,7 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                                     className={
                                         voiceListening
                                             ? "size-8 shrink-0 rounded-full text-destructive hover:text-destructive"
-                                            : "size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                                            : "group size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
                                     }
                                     aria-label={
                                         voiceListening
@@ -398,9 +415,13 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                                     disabled={!speechSupported}
                                     onClick={toggleVoiceSearch}
                                 >
-                                    <Mic
-                                        className="size-5"
-                                        strokeWidth={2}
+                                    {/* REMOVED className="size-5" AND PASSED size={20} AS A PROP */}
+                                    <MicIcon
+                                        size={30}
+                                        className={cn(
+                                            "transition-colors",
+                                            voiceListening ? "text-destructive" : "group-hover:text-foreground"
+                                        )}
                                         aria-hidden
                                     />
                                 </Button>

@@ -21,6 +21,11 @@ export type QuickLaunchIconKey =
   | "folder"
   | "music"
   | "camera"
+  | "scan"
+  | "sun"
+  | "brightness"
+  | "moon"
+  | "dark"
 
 export type QuickLaunchItem = {
   id: string
@@ -38,6 +43,11 @@ export const QUICK_LAUNCH_ICON_POOL: readonly QuickLaunchIconKey[] = [
   "folder",
   "music",
   "camera",
+  "scan",
+  "sun",
+  "brightness",
+  "moon",
+  "dark",
 ] as const
 
 export type BookmarkItem = {

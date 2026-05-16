@@ -1,4 +1,6 @@
-import { Plus, Trash2 } from "lucide-react"
+import { PlusIcon } from "@/components/animated-icons/plus-icon"
+// Note: We can reuse  existing TrashIcon from earlier or standard fallback, assuming TrashIcon is locally defined:
+import { TrashIcon } from "@/components/animated-icons/trash-icon"
 import { type Dispatch, type SetStateAction } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -138,7 +140,7 @@ export function QuickLaunchEditModal({
                                 onClick={() => removeSlot(index)}
                                 aria-label={`Remove link ${index + 1}`}
                             >
-                                <Trash2 className="size-4" strokeWidth={2} />
+                               <TrashIcon size={16} className="transition-colors group-hover:text-destructive" />
                             </Button>
                         </div>
                     ))}
@@ -152,7 +154,7 @@ export function QuickLaunchEditModal({
                         onClick={addSlot}
                         disabled={draft.length >= MAX_QUICK_LAUNCH_LINKS}
                     >
-                        <Plus className="size-4" strokeWidth={2} />
+                        <PlusIcon size={16} className="text-foreground" />
                         Add link
                     </Button>
                 </div>

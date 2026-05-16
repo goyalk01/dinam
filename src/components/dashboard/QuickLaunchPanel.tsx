@@ -1,4 +1,4 @@
-import { SquarePen } from "lucide-react"
+import { SquarePenIcon } from "@/components/animated-icons/square-pen-icon"
 import { useState } from "react"
 
 import { dashboardSectionLabelClassName } from "@/components/dashboard/dashboard-section-label-classes"
@@ -94,7 +94,7 @@ export function QuickLaunchPanel() {
                                 className="text-muted-foreground"
                                 aria-label="Edit quick launch links"
                             >
-                                <SquarePen className="size-4" strokeWidth={2} />
+                                <SquarePenIcon size={16} className="transition-colors group-hover:text-foreground" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" sideOffset={6}>

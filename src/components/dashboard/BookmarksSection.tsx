@@ -1,16 +1,20 @@
-import { Bookmark, ExternalLink } from "lucide-react"
+"use client";
 
-import { dashboardSectionLabelClassName } from "@/components/dashboard/dashboard-section-label-classes"
+import { ExternalLink } from "lucide-react";
+// 1. Import your new animated icon component
+import { BookmarkIcon } from "@/components/animated-icons/bookmark-icon"; 
+
+import { dashboardSectionLabelClassName } from "@/components/dashboard/dashboard-section-label-classes";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { useDashboardState } from "@/context/dashboard-state"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/tooltip";
+import { useDashboardState } from "@/context/dashboard-state";
+import { cn } from "@/lib/utils";
 
 export function BookmarksSection() {
-    const { bookmarks } = useDashboardState()
+    const { bookmarks } = useDashboardState();
 
     return (
         <article className="rounded-2xl bg-card p-6 shadow-md ring-1 ring-border/40 lg:p-7">
@@ -30,17 +34,17 @@ export function BookmarksSection() {
                                     )}
                                 >
                                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground">
-                                        <Bookmark
-                                            className="size-4"
-                                            strokeWidth={2}
-                                            aria-hidden
+                                        {/* 2. Use the Animated Icon instead of the static one */}
+                                        <BookmarkIcon 
+                                            size={16} 
+                                            className="text-muted-foreground transition-colors group-hover:text-primary" 
                                         />
                                     </span>
                                     <span className="min-w-0 flex-1 truncate">
                                         {item.title}
                                     </span>
                                     <ExternalLink
-                                        className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                                        className="size-3.5 shrink-0 text-muted-foreground opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0"
                                         strokeWidth={2}
                                         aria-hidden
                                     />
@@ -61,5 +65,5 @@ export function BookmarksSection() {
                 ))}
             </ul>
         </article>
-    )
+    );
 }
