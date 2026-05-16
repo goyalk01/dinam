@@ -13,10 +13,12 @@ import {
 import {
   MOCK_BOOKMARKS,
   MOCK_QUICK_LAUNCH,
+  MOCK_QUICK_LINKS,
   QUICK_LAUNCH_ICON_POOL,
   type BookmarkItem,
   type QuickLaunchIconKey,
   type QuickLaunchItem,
+  type QuickLinkItem,
 } from "@/data/dashboard-mock"
 
 import {
@@ -37,6 +39,7 @@ export type DashboardTodo = {
 const TODOS_KEY = "dinam-dashboard-todos"
 const BOOKMARKS_KEY = "dinam-dashboard-bookmarks"
 const QUICK_LAUNCH_KEY = "dinam-dashboard-quick-launch"
+const QUICK_LINKS_KEY = "dinam-dashboard-quick-links"
 
 function newTodoId() {
   return `t-${crypto.randomUUID()}`
@@ -115,10 +118,32 @@ function loadQuickLaunch(): QuickLaunchItem[] {
   }
 }
 
+function loadQuickLinks(): QuickLinkItem[] {
+  try {
+    const raw = localStorage.getItem(QUICK_LINKS_KEY)
+    if (!raw) return [...MOCK_QUICK_LINKS]
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return [...MOCK_QUICK_LINKS]
+    return parsed.filter(
+      (x): x is QuickLinkItem =>
+        typeof x === "object" &&
+        x !== null &&
+        typeof (x as QuickLinkItem).id === "string" &&
+        typeof (x as QuickLinkItem).url === "string" &&
+        typeof (x as QuickLinkItem).title === "string" &&
+        typeof (x as QuickLinkItem).description === "string" &&
+        typeof (x as QuickLinkItem).favicon === "string"
+    )
+  } catch {
+    return [...MOCK_QUICK_LINKS]
+  }
+}
+
 export type DashboardStateContextValue = {
   todos: DashboardTodo[]
   bookmarks: BookmarkItem[]
   quickLaunchItems: QuickLaunchItem[]
+  quickLinks: QuickLinkItem[]
   addTodo: (
     label: string,
     startDate?: string,
@@ -142,6 +167,8 @@ export type DashboardStateContextValue = {
     id: string,
     patch: Partial<Pick<QuickLaunchItem, "name" | "href" | "icon">>
   ) => void
+  addQuickLink: (item: QuickLinkItem) => void
+  removeQuickLink: (id: string) => void
 }
 
 const DashboardStateContext = createContext<DashboardStateContextValue | null>(
@@ -153,6 +180,8 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
   const [bookmarks, setBookmarksState] = useState<BookmarkItem[]>(loadBookmarks)
   const [quickLaunchItems, setQuickLaunchState] =
     useState<QuickLaunchItem[]>(loadQuickLaunch)
+  const [quickLinks, setQuickLinksState] =
+    useState<QuickLinkItem[]>(loadQuickLinks)
 
   useEffect(() => {
     localStorage.setItem(TODOS_KEY, JSON.stringify(todos))
@@ -313,11 +342,33 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
     []
   )
 
+  const addQuickLink = useCallback((item: QuickLinkItem) => {
+    setQuickLinksState((prev) => {
+      const exists = prev.some(
+        (link) => link.url.toLowerCase() === item.url.toLowerCase()
+      )
+      if (exists) return prev
+
+      const next = [...prev, item]
+      localStorage.setItem(QUICK_LINKS_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const removeQuickLink = useCallback((id: string) => {
+    setQuickLinksState((prev) => {
+      const next = prev.filter((link) => link.id !== id)
+      localStorage.setItem(QUICK_LINKS_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
+
   const value = useMemo(
     () => ({
       todos,
       bookmarks,
       quickLaunchItems,
+      quickLinks,
       addTodo,
       toggleTodo,
       updateTodo,
@@ -329,11 +380,14 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
       addQuickLaunchItem,
       removeQuickLaunchItem,
       updateQuickLaunchItem,
+      addQuickLink,
+      removeQuickLink,
     }),
     [
       todos,
       bookmarks,
       quickLaunchItems,
+      quickLinks,
       addTodo,
       toggleTodo,
       updateTodo,
@@ -345,6 +399,8 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
       addQuickLaunchItem,
       removeQuickLaunchItem,
       updateQuickLaunchItem,
+      addQuickLink,
+      removeQuickLink,
     ]
   )
 

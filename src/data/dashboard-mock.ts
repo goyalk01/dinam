@@ -129,3 +129,13 @@ export const MOCK_BOOKMARKS: BookmarkItem[] = [
 ]
 
 export const MOCK_STREAK_DAYS = 5
+
+export type QuickLinkItem = {
+  id: string
+  url: string
+  title: string
+  description: string
+  favicon: string
+}
+
+export const MOCK_QUICK_LINKS: QuickLinkItem[] = []
