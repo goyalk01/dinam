@@ -3,6 +3,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -133,31 +134,33 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
   const [quickLaunchItems, setQuickLaunchState] =
     useState<QuickLaunchItem[]>(loadQuickLaunch)
 
+  useEffect(() => {
+    localStorage.setItem(TODOS_KEY, JSON.stringify(todos))
+  }, [todos])
+
   const addTodo = useCallback((label: string) => {
     const trimmed = label.trim()
     if (!trimmed) return ""
+
     const id = newTodoId()
-    setTodosState((prev) => {
-      const next = [...prev, { id, label: trimmed, done: false }]
-      localStorage.setItem(TODOS_KEY, JSON.stringify(next))
-      return next
-    })
+
+    setTodosState((prev) => [...prev, { id, label: trimmed, done: false }])
+
     return id
   }, [])
 
   const toggleTodo = useCallback((id: string) => {
-    setTodosState((prev) => {
-      const next = prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
-      localStorage.setItem(TODOS_KEY, JSON.stringify(next))
-      return next
-    })
+    setTodosState((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    )
   }, [])
 
   const updateTodo = useCallback(
     (id: string, patch: { label?: string; done?: boolean }) => {
-      setTodosState((prev) => {
-        const next = prev.map((t) => {
+      setTodosState((prev) =>
+        prev.map((t) => {
           if (t.id !== id) return t
+
           return {
             ...t,
             ...(patch.label !== undefined
@@ -166,39 +169,33 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
             ...(patch.done !== undefined ? { done: patch.done } : {}),
           }
         })
-        localStorage.setItem(TODOS_KEY, JSON.stringify(next))
-        return next
-      })
+      )
     },
     []
   )
 
   const deleteTodo = useCallback((id: string) => {
-    setTodosState((prev) => {
-      const next = prev.filter((t) => t.id !== id)
-      localStorage.setItem(TODOS_KEY, JSON.stringify(next))
-      return next
-    })
+    setTodosState((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
   const clearCompletedTodos = useCallback(() => {
-    setTodosState((prev) => {
-      const next = prev.filter((t) => !t.done)
-      localStorage.setItem(TODOS_KEY, JSON.stringify(next))
-      return next
-    })
+    setTodosState((prev) => prev.filter((t) => !t.done))
   }, [])
 
   const addBookmark = useCallback((title: string, href: string) => {
     const t = title.trim()
     const h = href.trim()
+
     if (!t || !h) return ""
+
     const id = newBookmarkId()
+
     setBookmarksState((prev) => {
       const next = [...prev, { id, title: t, href: h }]
       localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next))
       return next
     })
+
     return id
   }, [])
 
@@ -219,13 +216,18 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
     (name: string, href: string, icon?: QuickLaunchIconKey) => {
       const hrefNorm = normalizeQuickLaunchHref(href)
       const nameTrim = name.trim()
+
       const resolvedName = nameTrim || fallbackNameFromQuickLaunchHref(hrefNorm)
+
       if (!resolvedName && hrefNorm === "#") return ""
+
       const id = `q-${crypto.randomUUID()}`
+
       setQuickLaunchState((prev) => {
         const nextIcon: QuickLaunchIconKey =
           icon ??
           QUICK_LAUNCH_ICON_POOL[prev.length % QUICK_LAUNCH_ICON_POOL.length]!
+
         const next = [
           ...prev,
           {
@@ -235,9 +237,12 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
             icon: nextIcon,
           },
         ]
+
         localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
+
         return next
       })
+
       return id
     },
     []
@@ -246,7 +251,9 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
   const removeQuickLaunchItem = useCallback((id: string) => {
     setQuickLaunchState((prev) => {
       const next = prev.filter((q) => q.id !== id)
+
       localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
+
       return next
     })
   }, [])
@@ -259,14 +266,19 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
       setQuickLaunchState((prev) => {
         const next = prev.map((q) => {
           if (q.id !== id) return q
+
           let href = q.href
+
           if (patch.href !== undefined) {
             href = normalizeQuickLaunchHref(patch.href)
           }
+
           let name = q.name
+
           if (patch.name !== undefined) {
             name = patch.name.trim() || fallbackNameFromQuickLaunchHref(href)
           }
+
           return {
             ...q,
             name,
@@ -274,7 +286,9 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
             ...(patch.icon !== undefined ? { icon: patch.icon } : {}),
           }
         })
+
         localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
+
         return next
       })
     },
@@ -325,10 +339,12 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
 
 export function useDashboardState(): DashboardStateContextValue {
   const ctx = useContext(DashboardStateContext)
+
   if (!ctx) {
     throw new Error(
       "useDashboardState must be used within DashboardStateProvider"
     )
   }
+
   return ctx
 }
