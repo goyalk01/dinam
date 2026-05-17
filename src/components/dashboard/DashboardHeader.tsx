@@ -50,11 +50,11 @@ function getPreferredColorSchemeServerSnapshot(): "dark" | "light" {
     return "light"
 }
 
-function timeOfDayGreeting(hour: number): string {
-    if (hour >= 5 && hour < 12) return "Good morning"
-    if (hour >= 12 && hour < 17) return "Good afternoon"
-    if (hour >= 17 && hour < 22) return "Good evening"
-    return "Good night"
+function timeOfDayGreeting(hour: number): { text: string; emoji: string } {
+    if (hour >= 5 && hour < 12) return { text: "Good morning", emoji: "🌅" }
+    if (hour >= 12 && hour < 17) return { text: "Good afternoon", emoji: "🌤️" }
+    if (hour >= 17 && hour < 22) return { text: "Good evening", emoji: "🌆" }
+    return { text: "Good night", emoji: "🌙" }
 }
 
 function getSpeechRecognitionCtor():
@@ -203,7 +203,7 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
 
     const timeWithPeriod = dayjs(now).format("h:mm A")
     const shortDateLine = dayjs(now).format("dddd, MMM D").toUpperCase()
-    const greeting = timeOfDayGreeting(dayjs(now).hour())
+    const { text: greetingText, emoji: greetingEmoji } = timeOfDayGreeting(dayjs(now).hour())
 
     return (
         <header className="w-full">
@@ -320,10 +320,9 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
             />
 
             <div className="mt-10 flex flex-col items-center text-center sm:mt-14">
-                <p className="text-6xl font-bold tracking-tight text-foreground sm:text-7xl md:text-8xl">
-                    {greeting}
+                <p className="flex items-center justify-center gap-3 text-6xl font-bold tracking-tight text-foreground sm:text-7xl md:text-8xl">
+                    {greetingText} <span className="animate-pulse">{greetingEmoji}</span>
                 </p>
-
 
                 <form
                     className="relative mt-8 w-full max-w-xl sm:mt-10"

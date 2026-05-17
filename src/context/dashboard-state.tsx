@@ -1,4 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {
     createContext,
     useCallback,
@@ -17,6 +19,7 @@ import {
     type QuickLaunchIconKey,
     type QuickLaunchItem,
 } from "@/data/dashboard-mock"
+
 import {
     fallbackNameFromQuickLaunchHref,
     normalizeQuickLaunchHref,
@@ -26,6 +29,10 @@ export type DashboardTodo = {
     id: string
     label: string
     done: boolean
+    startDate?: string
+    dueDate?: string
+    progress?: number
+    finishedDate?: string
 }
 
 const TODOS_KEY = "dinam-dashboard-todos"
@@ -43,17 +50,37 @@ function newBookmarkId() {
 function loadTodos(): DashboardTodo[] {
     try {
         const raw = localStorage.getItem(TODOS_KEY)
+
         if (!raw) return []
-        const parsed: unknown = JSON.parse(raw)
+
+        const parsed = JSON.parse(raw)
+
         if (!Array.isArray(parsed)) return []
-        return parsed.filter(
-            (x): x is DashboardTodo =>
-                typeof x === "object" &&
-                x !== null &&
-                typeof (x as DashboardTodo).id === "string" &&
-                typeof (x as DashboardTodo).label === "string" &&
-                typeof (x as DashboardTodo).done === "boolean",
-        )
+
+        return parsed
+            .map((x: any) => ({
+                id: String(x.id || ""),
+                label: String(x.label || ""),
+                done: Boolean(x.done),
+
+                startDate: x.startDate
+                    ? String(x.startDate)
+                    : "",
+
+                dueDate: x.dueDate
+                    ? String(x.dueDate)
+                    : "",
+
+                progress:
+                    typeof x.progress === "number"
+                        ? x.progress
+                        : 0,
+
+                finishedDate: x.finishedDate
+                    ? String(x.finishedDate)
+                    : "",
+            }))
+            .filter((todo) => todo.id && todo.label)
     } catch {
         return []
     }
@@ -62,9 +89,14 @@ function loadTodos(): DashboardTodo[] {
 function loadBookmarks(): BookmarkItem[] {
     try {
         const raw = localStorage.getItem(BOOKMARKS_KEY)
+
         if (!raw) return [...MOCK_BOOKMARKS]
+
         const parsed: unknown = JSON.parse(raw)
-        if (!Array.isArray(parsed)) return [...MOCK_BOOKMARKS]
+
+        if (!Array.isArray(parsed))
+            return [...MOCK_BOOKMARKS]
+
         const next = parsed.filter(
             (x): x is BookmarkItem =>
                 typeof x === "object" &&
@@ -73,7 +105,10 @@ function loadBookmarks(): BookmarkItem[] {
                 typeof (x as BookmarkItem).title === "string" &&
                 typeof (x as BookmarkItem).href === "string",
         )
-        return next.length > 0 ? next : [...MOCK_BOOKMARKS]
+
+        return next.length > 0
+            ? next
+            : [...MOCK_BOOKMARKS]
     } catch {
         return [...MOCK_BOOKMARKS]
     }
@@ -81,20 +116,34 @@ function loadBookmarks(): BookmarkItem[] {
 
 function loadQuickLaunch(): QuickLaunchItem[] {
     try {
-        const raw = localStorage.getItem(QUICK_LAUNCH_KEY)
+        const raw = localStorage.getItem(
+            QUICK_LAUNCH_KEY,
+        )
+
         if (!raw) return [...MOCK_QUICK_LAUNCH]
+
         const parsed: unknown = JSON.parse(raw)
-        if (!Array.isArray(parsed)) return [...MOCK_QUICK_LAUNCH]
+
+        if (!Array.isArray(parsed))
+            return [...MOCK_QUICK_LAUNCH]
+
         const next = parsed.filter(
             (x): x is QuickLaunchItem =>
                 typeof x === "object" &&
                 x !== null &&
-                typeof (x as QuickLaunchItem).id === "string" &&
-                typeof (x as QuickLaunchItem).name === "string" &&
-                typeof (x as QuickLaunchItem).href === "string" &&
-                typeof (x as QuickLaunchItem).icon === "string",
+                typeof (x as QuickLaunchItem).id ===
+                    "string" &&
+                typeof (x as QuickLaunchItem).name ===
+                    "string" &&
+                typeof (x as QuickLaunchItem).href ===
+                    "string" &&
+                typeof (x as QuickLaunchItem).icon ===
+                    "string",
         )
-        return next.length > 0 ? next : [...MOCK_QUICK_LAUNCH]
+
+        return next.length > 0
+            ? next
+            : [...MOCK_QUICK_LAUNCH]
     } catch {
         return [...MOCK_QUICK_LAUNCH]
     }
@@ -102,81 +151,214 @@ function loadQuickLaunch(): QuickLaunchItem[] {
 
 export type DashboardStateContextValue = {
     todos: DashboardTodo[]
+
     bookmarks: BookmarkItem[]
+
     quickLaunchItems: QuickLaunchItem[]
-    addTodo: (label: string) => string
+
+    addTodo: (
+        label: string,
+        startDate?: string,
+        dueDate?: string,
+        progress?: number,
+    ) => string
+
     toggleTodo: (id: string) => void
-    updateTodo: (id: string, patch: { label?: string; done?: boolean }) => void
+
+    updateTodo: (
+        id: string,
+        patch: {
+            label?: string
+            done?: boolean
+            startDate?: string
+            dueDate?: string
+            progress?: number
+            finishedDate?: string
+        },
+    ) => void
+
     deleteTodo: (id: string) => void
+
     clearCompletedTodos: () => void
-    addBookmark: (title: string, href: string) => string
+
+    addBookmark: (
+        title: string,
+        href: string,
+    ) => string
+
     deleteBookmark: (id: string) => void
-    setQuickLaunchItems: (items: QuickLaunchItem[]) => void
+
+    setQuickLaunchItems: (
+        items: QuickLaunchItem[],
+    ) => void
+
     addQuickLaunchItem: (
         name: string,
         href: string,
         icon?: QuickLaunchIconKey,
     ) => string
+
     removeQuickLaunchItem: (id: string) => void
+
     updateQuickLaunchItem: (
         id: string,
         patch: Partial<
-            Pick<QuickLaunchItem, "name" | "href" | "icon">
+            Pick<
+                QuickLaunchItem,
+                "name" | "href" | "icon"
+            >
         >,
     ) => void
 }
 
-const DashboardStateContext = createContext<DashboardStateContextValue | null>(
-    null,
-)
-
-export function DashboardStateProvider({ children }: { children: ReactNode }) {
-    const [todos, setTodosState] = useState<DashboardTodo[]>(loadTodos)
-    const [bookmarks, setBookmarksState] =
-        useState<BookmarkItem[]>(loadBookmarks)
-    const [quickLaunchItems, setQuickLaunchState] = useState<QuickLaunchItem[]>(
-        loadQuickLaunch,
+const DashboardStateContext =
+    createContext<DashboardStateContextValue | null>(
+        null,
     )
 
+export function DashboardStateProvider({
+    children,
+}: {
+    children: ReactNode
+}) {
+    const [todos, setTodosState] =
+        useState<DashboardTodo[]>(loadTodos)
+
+    const [bookmarks, setBookmarksState] =
+        useState<BookmarkItem[]>(loadBookmarks)
+
+    const [quickLaunchItems, setQuickLaunchState] =
+        useState<QuickLaunchItem[]>(loadQuickLaunch)
+
     useEffect(() => {
-        localStorage.setItem(TODOS_KEY, JSON.stringify(todos))
+        localStorage.setItem(
+            TODOS_KEY,
+            JSON.stringify(todos),
+        )
     }, [todos])
 
-    const addTodo = useCallback((label: string) => {
-        const trimmed = label.trim()
-        if (!trimmed) return ""
+    const addTodo = useCallback(
+        (
+            label: string,
+            startDate?: string,
+            dueDate?: string,
+            progress?: number,
+        ) => {
+            const trimmed = label.trim()
 
-        const id = newTodoId()
+            if (!trimmed) return ""
 
-        setTodosState((prev) => [
-            ...prev,
-            { id, label: trimmed, done: false },
-        ])
+            const id = newTodoId()
 
-        return id
-    }, [])
+            setTodosState((prev) => [
+                ...prev,
+                {
+                    id,
+                    label: trimmed,
+                    done: false,
+
+                    startDate: startDate || "",
+
+                    dueDate: dueDate || "",
+
+                    progress: progress || 0,
+
+                    finishedDate: "",
+                },
+            ])
+
+            return id
+        },
+        [],
+    )
 
     const toggleTodo = useCallback((id: string) => {
         setTodosState((prev) =>
-            prev.map((t) =>
-                t.id === id ? { ...t, done: !t.done } : t,
-            ),
+            prev.map((t) => {
+                if (t.id !== id) return t
+
+                const nextDone = !t.done
+
+                return {
+                    ...t,
+
+                    done: nextDone,
+
+                    progress: nextDone
+                        ? 100
+                        : t.progress,
+
+                    finishedDate: nextDone
+                        ? new Date()
+                              .toISOString()
+                              .split("T")[0]
+                        : "",
+                }
+            }),
         )
     }, [])
 
     const updateTodo = useCallback(
-        (id: string, patch: { label?: string; done?: boolean }) => {
+        (
+            id: string,
+            patch: {
+                label?: string
+                done?: boolean
+                startDate?: string
+                dueDate?: string
+                progress?: number
+                finishedDate?: string
+            },
+        ) => {
             setTodosState((prev) =>
                 prev.map((t) => {
                     if (t.id !== id) return t
 
                     return {
                         ...t,
+
                         ...(patch.label !== undefined
-                            ? { label: patch.label.trim() || t.label }
+                            ? {
+                                  label:
+                                      patch.label.trim() ||
+                                      t.label,
+                              }
                             : {}),
+
                         ...(patch.done !== undefined
                             ? { done: patch.done }
+                            : {}),
+
+                        ...(patch.startDate !==
+                        undefined
+                            ? {
+                                  startDate:
+                                      patch.startDate,
+                              }
+                            : {}),
+
+                        ...(patch.dueDate !==
+                        undefined
+                            ? {
+                                  dueDate:
+                                      patch.dueDate,
+                              }
+                            : {}),
+
+                        ...(patch.progress !==
+                        undefined
+                            ? {
+                                  progress:
+                                      patch.progress,
+                              }
+                            : {}),
+
+                        ...(patch.finishedDate !==
+                        undefined
+                            ? {
+                                  finishedDate:
+                                      patch.finishedDate,
+                              }
                             : {}),
                     }
                 }),
@@ -186,52 +368,98 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
     )
 
     const deleteTodo = useCallback((id: string) => {
-        setTodosState((prev) => prev.filter((t) => t.id !== id))
+        setTodosState((prev) =>
+            prev.filter((t) => t.id !== id),
+        )
     }, [])
 
     const clearCompletedTodos = useCallback(() => {
-        setTodosState((prev) => prev.filter((t) => !t.done))
+        setTodosState((prev) =>
+            prev.filter((t) => !t.done),
+        )
     }, [])
 
-    const addBookmark = useCallback((title: string, href: string) => {
-        const t = title.trim()
-        const h = href.trim()
+    const addBookmark = useCallback(
+        (title: string, href: string) => {
+            const t = title.trim()
+            const h = href.trim()
 
-        if (!t || !h) return ""
+            if (!t || !h) return ""
 
-        const id = newBookmarkId()
+            const id = newBookmarkId()
 
-        setBookmarksState((prev) => {
-            const next = [...prev, { id, title: t, href: h }]
-            localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next))
-            return next
-        })
+            setBookmarksState((prev) => {
+                const next = [
+                    ...prev,
+                    {
+                        id,
+                        title: t,
+                        href: h,
+                    },
+                ]
 
-        return id
-    }, [])
+                localStorage.setItem(
+                    BOOKMARKS_KEY,
+                    JSON.stringify(next),
+                )
 
-    const deleteBookmark = useCallback((id: string) => {
-        setBookmarksState((prev) => {
-            const next = prev.filter((b) => b.id !== id)
-            localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next))
-            return next
-        })
-    }, [])
+                return next
+            })
 
-    const setQuickLaunchItems = useCallback((items: QuickLaunchItem[]) => {
-        localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(items))
-        setQuickLaunchState(items)
-    }, [])
+            return id
+        },
+        [],
+    )
+
+    const deleteBookmark = useCallback(
+        (id: string) => {
+            setBookmarksState((prev) => {
+                const next = prev.filter(
+                    (b) => b.id !== id,
+                )
+
+                localStorage.setItem(
+                    BOOKMARKS_KEY,
+                    JSON.stringify(next),
+                )
+
+                return next
+            })
+        },
+        [],
+    )
+
+    const setQuickLaunchItems = useCallback(
+        (items: QuickLaunchItem[]) => {
+            localStorage.setItem(
+                QUICK_LAUNCH_KEY,
+                JSON.stringify(items),
+            )
+
+            setQuickLaunchState(items)
+        },
+        [],
+    )
 
     const addQuickLaunchItem = useCallback(
-        (name: string, href: string, icon?: QuickLaunchIconKey) => {
-            const hrefNorm = normalizeQuickLaunchHref(href)
+        (
+            name: string,
+            href: string,
+            icon?: QuickLaunchIconKey,
+        ) => {
+            const hrefNorm =
+                normalizeQuickLaunchHref(href)
+
             const nameTrim = name.trim()
 
             const resolvedName =
-                nameTrim || fallbackNameFromQuickLaunchHref(hrefNorm)
+                nameTrim ||
+                fallbackNameFromQuickLaunchHref(
+                    hrefNorm,
+                )
 
-            if (!resolvedName && hrefNorm === "#") return ""
+            if (!resolvedName && hrefNorm === "#")
+                return ""
 
             const id = `q-${crypto.randomUUID()}`
 
@@ -239,7 +467,8 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
                 const nextIcon: QuickLaunchIconKey =
                     icon ??
                     QUICK_LAUNCH_ICON_POOL[
-                        prev.length % QUICK_LAUNCH_ICON_POOL.length
+                        prev.length %
+                            QUICK_LAUNCH_ICON_POOL.length
                     ]!
 
                 const next = [
@@ -252,7 +481,10 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
                     },
                 ]
 
-                localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
+                localStorage.setItem(
+                    QUICK_LAUNCH_KEY,
+                    JSON.stringify(next),
+                )
 
                 return next
             })
@@ -262,20 +494,33 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
         [],
     )
 
-    const removeQuickLaunchItem = useCallback((id: string) => {
-        setQuickLaunchState((prev) => {
-            const next = prev.filter((q) => q.id !== id)
+    const removeQuickLaunchItem = useCallback(
+        (id: string) => {
+            setQuickLaunchState((prev) => {
+                const next = prev.filter(
+                    (q) => q.id !== id,
+                )
 
-            localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
+                localStorage.setItem(
+                    QUICK_LAUNCH_KEY,
+                    JSON.stringify(next),
+                )
 
-            return next
-        })
-    }, [])
+                return next
+            })
+        },
+        [],
+    )
 
     const updateQuickLaunchItem = useCallback(
         (
             id: string,
-            patch: Partial<Pick<QuickLaunchItem, "name" | "href" | "icon">>,
+            patch: Partial<
+                Pick<
+                    QuickLaunchItem,
+                    "name" | "href" | "icon"
+                >
+            >,
         ) => {
             setQuickLaunchState((prev) => {
                 const next = prev.map((q) => {
@@ -284,7 +529,10 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
                     let href = q.href
 
                     if (patch.href !== undefined) {
-                        href = normalizeQuickLaunchHref(patch.href)
+                        href =
+                            normalizeQuickLaunchHref(
+                                patch.href,
+                            )
                     }
 
                     let name = q.name
@@ -292,18 +540,26 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
                     if (patch.name !== undefined) {
                         name =
                             patch.name.trim() ||
-                            fallbackNameFromQuickLaunchHref(href)
+                            fallbackNameFromQuickLaunchHref(
+                                href,
+                            )
                     }
 
                     return {
                         ...q,
                         name,
                         href,
-                        ...(patch.icon !== undefined ? { icon: patch.icon } : {}),
+
+                        ...(patch.icon !== undefined
+                            ? { icon: patch.icon }
+                            : {}),
                     }
                 })
 
-                localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
+                localStorage.setItem(
+                    QUICK_LAUNCH_KEY,
+                    JSON.stringify(next),
+                )
 
                 return next
             })
@@ -311,43 +567,59 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
         [],
     )
 
-    const value = useMemo<DashboardStateContextValue>(
-        () => ({
-            todos,
-            bookmarks,
-            quickLaunchItems,
-            addTodo,
-            toggleTodo,
-            updateTodo,
-            deleteTodo,
-            clearCompletedTodos,
-            addBookmark,
-            deleteBookmark,
-            setQuickLaunchItems,
-            addQuickLaunchItem,
-            removeQuickLaunchItem,
-            updateQuickLaunchItem,
-        }),
-        [
-            todos,
-            bookmarks,
-            quickLaunchItems,
-            addTodo,
-            toggleTodo,
-            updateTodo,
-            deleteTodo,
-            clearCompletedTodos,
-            addBookmark,
-            deleteBookmark,
-            setQuickLaunchItems,
-            addQuickLaunchItem,
-            removeQuickLaunchItem,
-            updateQuickLaunchItem,
-        ],
-    )
+    const value =
+        useMemo<DashboardStateContextValue>(
+            () => ({
+                todos,
+
+                bookmarks,
+
+                quickLaunchItems,
+
+                addTodo,
+
+                toggleTodo,
+
+                updateTodo,
+
+                deleteTodo,
+
+                clearCompletedTodos,
+
+                addBookmark,
+
+                deleteBookmark,
+
+                setQuickLaunchItems,
+
+                addQuickLaunchItem,
+
+                removeQuickLaunchItem,
+
+                updateQuickLaunchItem,
+            }),
+            [
+                todos,
+                bookmarks,
+                quickLaunchItems,
+                addTodo,
+                toggleTodo,
+                updateTodo,
+                deleteTodo,
+                clearCompletedTodos,
+                addBookmark,
+                deleteBookmark,
+                setQuickLaunchItems,
+                addQuickLaunchItem,
+                removeQuickLaunchItem,
+                updateQuickLaunchItem,
+            ],
+        )
 
     return (
-        <DashboardStateContext.Provider value={value}>
+        <DashboardStateContext.Provider
+            value={value}
+        >
             {children}
         </DashboardStateContext.Provider>
     )
