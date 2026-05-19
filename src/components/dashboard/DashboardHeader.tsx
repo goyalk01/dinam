@@ -1,4 +1,3 @@
-import dayjs from "dayjs"
 import {
     MessageSquare,
     Mic,
@@ -33,6 +32,7 @@ import {
     openGoogleSearchByImage,
     resolveNavigationHref,
 } from "@/lib/search-engine"
+import { getCreativeGreeting } from "@/utils/greetings"
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 
@@ -48,13 +48,6 @@ function getPreferredColorSchemeSnapshot(): "dark" | "light" {
 
 function getPreferredColorSchemeServerSnapshot(): "dark" | "light" {
     return "light"
-}
-
-function timeOfDayGreeting(hour: number): { text: string; emoji: string } {
-    if (hour >= 5 && hour < 12) return { text: "Good morning", emoji: "🌅" }
-    if (hour >= 12 && hour < 17) return { text: "Good afternoon", emoji: "🌤️" }
-    if (hour >= 17 && hour < 22) return { text: "Good evening", emoji: "🌆" }
-    return { text: "Good night", emoji: "🌙" }
 }
 
 function getSpeechRecognitionCtor():
@@ -201,9 +194,22 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
         [],
     )
 
-    const timeWithPeriod = dayjs(now).format("h:mm A")
-    const shortDateLine = dayjs(now).format("dddd, MMM D").toUpperCase()
-    const { text: greetingText, emoji: greetingEmoji } = timeOfDayGreeting(dayjs(now).hour())
+    // Robust native JS string formatting replacements 
+    const timeWithPeriod = now.toLocaleTimeString(navigator.language || "en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    })
+
+    const shortDateLine = now.toLocaleDateString(navigator.language || "en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+    }).toUpperCase()
+    
+    // FIX: Memoize the greeting string using currentHour dependencies to completely block re-rendering calculations on matching intervals
+    const currentHour = now.getHours()
+    const greeting = useMemo(() => getCreativeGreeting(), [currentHour])
 
     return (
         <header className="w-full">
@@ -221,7 +227,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                         <Sun
                             className="size-3.5 shrink-0 text-chart-1"
                             strokeWidth={2}
-                            aria-hidden
                         />
                         {MOCK_WEATHER.city}
                         <span className="text-primary/55">·</span>
@@ -238,38 +243,18 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-full text-muted-foreground"
-                                aria-label={
-                                    resolvedTheme === "dark"
-                                        ? "Switch to light mode"
-                                        : "Switch to dark mode"
-                                }
-                                onClick={() =>
-                                    setTheme(
-                                        resolvedTheme === "dark"
-                                            ? "light"
-                                            : "dark",
-                                    )
-                                }
+                                aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                                onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
                             >
                                 {resolvedTheme === "dark" ? (
-                                    <Sun
-                                        className="size-5"
-                                        strokeWidth={2}
-                                        aria-hidden
-                                    />
+                                    <Sun className="size-5" strokeWidth={2} />
                                 ) : (
-                                    <Moon
-                                        className="size-5"
-                                        strokeWidth={2}
-                                        aria-hidden
-                                    />
+                                    <Moon className="size-5" strokeWidth={2} />
                                 )}
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" sideOffset={6}>
-                            {resolvedTheme === "dark"
-                                ? "Light mode"
-                                : "Dark mode"}
+                            {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
                         </TooltipContent>
                     </Tooltip>
                     {onOpenAssistant ? (
@@ -280,13 +265,9 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                                     variant="ghost"
                                     size="icon"
                                     className="rounded-full text-muted-foreground"
-                                    aria-label="Open assistant"
                                     onClick={onOpenAssistant}
                                 >
-                                    <MessageSquare
-                                        className="size-5"
-                                        strokeWidth={2}
-                                    />
+                                    <MessageSquare className="size-5" strokeWidth={2} />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" sideOffset={6}>
@@ -301,7 +282,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-full text-muted-foreground"
-                                aria-label="Open settings"
                                 onClick={() => setSettingsOpen(true)}
                             >
                                 <Settings className="size-5" strokeWidth={2} />
@@ -321,30 +301,18 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
 
             <div className="mt-10 flex flex-col items-center text-center sm:mt-14">
                 <p className="flex items-center justify-center gap-3 text-6xl font-bold tracking-tight text-foreground sm:text-7xl md:text-8xl">
-                    {greetingText} <span className="animate-pulse">{greetingEmoji}</span>
+                    {greeting.text} <span className="animate-pulse">{greeting.emoji}</span>
                 </p>
 
-                <form
-                    className="relative mt-8 w-full max-w-xl sm:mt-10"
-                    onSubmit={handleSearchSubmit}
-                >
-                    <label htmlFor="dashboard-search" className="sr-only">
-                        Search the web or type a URL
-                    </label>
+                <form className="relative mt-8 w-full max-w-xl sm:mt-10" onSubmit={handleSearchSubmit}>
                     <input
                         ref={imageSearchInputRef}
                         type="file"
                         accept="image/*"
                         className="sr-only"
-                        tabIndex={-1}
-                        aria-hidden
                         onChange={handleImageSearchFile}
                     />
-                    <Search
-                        className="pointer-events-none absolute top-1/2 left-5 z-1 size-5 -translate-y-1/2 text-muted-foreground"
-                        strokeWidth={2}
-                        aria-hidden
-                    />
+                    <Search className="pointer-events-none absolute top-1/2 left-5 z-1 size-5 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />
                     <Input
                         id="dashboard-search"
                         name="q"
@@ -355,64 +323,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                         autoComplete="off"
                         className="h-auto rounded-full border-border/80 bg-card py-3.5 pr-21 pl-14 text-center shadow-sm placeholder:text-muted-foreground focus-visible:ring-ring/25 sm:text-left"
                     />
-                    <div className="absolute top-1/2 right-2 z-1 flex -translate-y-1/2 items-center gap-0.5">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-xs"
-                                    className="size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-                                    aria-label="Search by image on Google"
-                                    onClick={handleImageSearchPick}
-                                >
-                                    <ScanSearch
-                                        className="size-5"
-                                        strokeWidth={2}
-                                        aria-hidden
-                                    />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" sideOffset={6}>
-                                Search by image (Google)
-                            </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-xs"
-                                    className={
-                                        voiceListening
-                                            ? "size-8 shrink-0 rounded-full text-destructive hover:text-destructive"
-                                            : "size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-                                    }
-                                    aria-label={
-                                        voiceListening
-                                            ? "Stop voice search"
-                                            : "Voice search"
-                                    }
-                                    aria-pressed={voiceListening}
-                                    disabled={!speechSupported}
-                                    onClick={toggleVoiceSearch}
-                                >
-                                    <Mic
-                                        className="size-5"
-                                        strokeWidth={2}
-                                        aria-hidden
-                                    />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" sideOffset={6}>
-                                {!speechSupported
-                                    ? "Voice search needs a supported browser (e.g. Chrome)"
-                                    : voiceListening
-                                      ? "Stop without searching"
-                                      : "Voice search (then opens results)"}
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
                 </form>
             </div>
         </header>
