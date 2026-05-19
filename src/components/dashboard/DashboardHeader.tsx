@@ -51,6 +51,20 @@ function getPreferredColorSchemeServerSnapshot(): "dark" | "light" {
   return "light"
 }
 
+function isEditableTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) {
+        return false
+    }
+    if (target.isContentEditable) {
+        return true
+    }
+    return Boolean(
+        target.closest(
+            "input, textarea, [contenteditable='true'], [contenteditable='']",
+        ),
+    )
+}
+
 function timeOfDayGreeting(hour: number): string {
   if (hour >= 5 && hour < 12) return "Good morning"
   if (hour >= 12 && hour < 17) return "Good afternoon"
@@ -91,25 +105,34 @@ function getWeatherCondition(code: number) {
 }
 
 export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
-  const { theme, setTheme, searchUrlTemplate } = useTheme()
-  const [now, setNow] = useState(() => new Date())
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [voiceListening, setVoiceListening] = useState(false)
-  const imageSearchInputRef = useRef<HTMLInputElement>(null)
-  const speechRecognitionRef = useRef<SpeechRecognition | null>(null)
-  const lastVoiceTranscriptRef = useRef("")
-  const voiceUserStoppedRef = useRef(false)
-  const voiceSessionFailedRef = useRef(false)
-  const systemPref = useSyncExternalStore(
-    subscribePreferredColorScheme,
-    getPreferredColorSchemeSnapshot,
-    getPreferredColorSchemeServerSnapshot
-  )
-  const resolvedTheme: "dark" | "light" =
-    theme === "system" ? systemPref : theme
+    const { theme, setTheme, searchUrlTemplate } = useTheme()
+    const [now, setNow] = useState(() => new Date())
+    const [settingsOpen, setSettingsOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState("")
+    const [searchFocused, setSearchFocused] = useState(false)
+    const [voiceListening, setVoiceListening] = useState(false)
+    const imageSearchInputRef = useRef<HTMLInputElement>(null)
+    const searchInputRef = useRef<HTMLInputElement>(null)
+    const speechRecognitionRef = useRef<SpeechRecognition | null>(null)
+    const lastVoiceTranscriptRef = useRef("")
+    const voiceUserStoppedRef = useRef(false)
+    const voiceSessionFailedRef = useRef(false)
+    const systemPref = useSyncExternalStore(
+        subscribePreferredColorScheme,
+        getPreferredColorSchemeSnapshot,
+        getPreferredColorSchemeServerSnapshot,
+    )
+    const resolvedTheme: "dark" | "light" =
+        theme === "system" ? systemPref : theme
 
-  const [weather, setWeather] = useState({
+    useEffect(() => {
+        const id = window.setInterval(() => setNow(new Date()), 1000)
+        return () => window.clearInterval(id)
+    }, [])
+
+   
+          
+           const [weather, setWeather] = useState({
     city: "",
     temperature: 0,
     weatherCode: 0,
@@ -168,7 +191,7 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
           setWeatherError("Location unavailable")
         } else {
           setWeatherError("Location timeout")
-        }
+               }
 
         setWeatherLoading(false)
       },
@@ -179,6 +202,44 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
       }
     )
   }, [])
+           useEffect(() => {
+    return () => {
+      speechRecognitionRef.current?.abort()
+      speechRecognitionRef.current = null
+    }
+  }, [])
+    useEffect(() => {
+        const handleShortcut = (event: KeyboardEvent) => {
+            if (event.defaultPrevented || event.isComposing) {
+                return
+            }
+
+            if (isEditableTarget(event.target)) {
+                return
+            }
+
+            const key = event.key.toLowerCase()
+            const isSlash = event.key === "/"
+            const isFind = (event.ctrlKey || event.metaKey) && key === "k"
+
+            if (!isSlash && !isFind) {
+                return
+            }
+
+            if (isSlash && (event.ctrlKey || event.metaKey || event.altKey)) {
+                return
+            }
+
+            event.preventDefault()
+            searchInputRef.current?.focus()
+        }
+
+        window.addEventListener("keydown", handleShortcut)
+        return () => window.removeEventListener("keydown", handleShortcut)
+    }, [])
+
+ 
+       
 
   useEffect(() => {
     return () => {
@@ -445,45 +506,109 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                   aria-label="Search by image on Google"
                   onClick={handleImageSearchPick}
                 >
-                  <ScanSearch className="size-5" strokeWidth={2} aria-hidden />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" sideOffset={6}>
-                Search by image (Google)
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  className={
-                    voiceListening
-                      ? "size-8 shrink-0 rounded-full text-destructive hover:text-destructive"
-                      : "size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-                  }
-                  aria-label={
-                    voiceListening ? "Stop voice search" : "Voice search"
-                  }
-                  aria-pressed={voiceListening}
-                  disabled={!speechSupported}
-                  onClick={toggleVoiceSearch}
-                >
-                  <Mic className="size-5" strokeWidth={2} aria-hidden />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" sideOffset={6}>
-                {!speechSupported
-                  ? "Voice search needs a supported browser (e.g. Chrome)"
-                  : voiceListening
-                    ? "Stop without searching"
-                    : "Voice search (then opens results)"}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </form>
-      </div>
-    </header>
-  )
+                    <label htmlFor="dashboard-search" className="sr-only">
+                        Search the web or type a URL
+                    </label>
+                    <input
+                        ref={imageSearchInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        tabIndex={-1}
+                        aria-hidden
+                        onChange={handleImageSearchFile}
+                    />
+                    <Search
+                        className="pointer-events-none absolute top-1/2 left-5 z-1 size-5 -translate-y-1/2 text-muted-foreground"
+                        strokeWidth={2}
+                        aria-hidden
+                    />
+                    <Input
+                        id="dashboard-search"
+                        name="q"
+                        type="search"
+                        ref={searchInputRef}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => setSearchFocused(true)}
+                        onBlur={() => setSearchFocused(false)}
+                        onKeyDown={(event) => {
+                            if (event.key === "Escape") {
+                                event.currentTarget.blur()
+                            }
+                        }}
+                        placeholder="Search the web or type a URL"
+                        autoComplete="off"
+                        className="h-auto rounded-full border-border/80 bg-card py-3.5 pr-28 pl-14 text-center shadow-sm placeholder:text-muted-foreground focus-visible:ring-ring/25 sm:text-left"
+                    />
+                    <div className="absolute top-1/2 right-2 z-1 flex -translate-y-1/2 items-center gap-0.5">
+                        {!searchFocused ? (
+                            <kbd
+                                aria-hidden
+                                className="pointer-events-none inline-flex h-5 items-center rounded-md border border-border/70 px-1.5 text-[10px] font-medium text-muted-foreground"
+                            >
+                                /
+                            </kbd>
+                        ) : null}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    className="size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                                    aria-label="Search by image on Google"
+                                    onClick={handleImageSearchPick}
+                                >
+                                    <ScanSearch
+                                        className="size-5"
+                                        strokeWidth={2}
+                                        aria-hidden
+                                    />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" sideOffset={6}>
+                                Search by image (Google)
+                            </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    className={
+                                        voiceListening
+                                            ? "size-8 shrink-0 rounded-full text-destructive hover:text-destructive"
+                                            : "size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                                    }
+                                    aria-label={
+                                        voiceListening
+                                            ? "Stop voice search"
+                                            : "Voice search"
+                                    }
+                                    aria-pressed={voiceListening}
+                                    disabled={!speechSupported}
+                                    onClick={toggleVoiceSearch}
+                                >
+                                    <Mic
+                                        className="size-5"
+                                        strokeWidth={2}
+                                        aria-hidden
+                                    />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" sideOffset={6}>
+                                {!speechSupported
+                                    ? "Voice search needs a supported browser (e.g. Chrome)"
+                                    : voiceListening
+                                      ? "Stop without searching"
+                                      : "Voice search (then opens results)"}
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </form>
+            </div>
+        </header>
+    )
 }

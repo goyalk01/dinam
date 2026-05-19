@@ -67,7 +67,14 @@ export async function fetchStoicQuoteFromApi(): Promise<{
     quote: string
     author: string
 } | null> {
-    const res = await fetch(STOIC_QUOTE_API_URL)
+    let res: Response
+    try {
+        res = await fetch(STOIC_QUOTE_API_URL)
+    } catch {
+        // Network error, CORS failure, offline, or DNS failure.
+        // Return null so the caller falls back to cached / mock quote.
+        return null
+    }
     if (!res.ok) return null
     const json: unknown = await res.json()
     if (
