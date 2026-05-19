@@ -18,7 +18,11 @@ const cursorVariants: Variants = {
   normal: { opacity: 1 },
   animate: {
     opacity: [1, 0, 1],
-    transition: { duration: 0.6, repeat: Infinity, ease: "steps(2, start)" as any },
+    transition: {
+      duration: 0.6,
+      repeat: Infinity,
+      ease: "linear",
+    },
   },
 }
 

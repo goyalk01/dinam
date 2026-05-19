@@ -1,6 +1,14 @@
+"use client"
+
 import { ImageIcon } from "lucide-react"
 import { type ChangeEvent, useEffect, useId, useRef, useState } from "react"
 
+import {
+  SEARCH_ENGINES,
+  getSearchEngineById,
+  getSearchEngineIdFromTemplate,
+  type SearchEngineId,
+} from "@/config/search-engines"
 import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -63,6 +71,7 @@ export function DashboardSettingsModal({
   const aiBaseUrlId = useId()
   const aiApiKeyId = useId()
   const aiModelId = useId()
+  const searchEngineSelectId = useId()
   const searchUrlId = useId()
   const accentId = useId()
 
@@ -78,6 +87,9 @@ export function DashboardSettingsModal({
     model: aiModel,
     setModel: setAiModel,
   } = useAiProviderSettings()
+
+  const searchEngineValue =
+    getSearchEngineIdFromTemplate(searchUrlTemplate) ?? "custom"
 
   useEffect(() => {
     if (!open) {
@@ -300,42 +312,85 @@ export function DashboardSettingsModal({
             ) : null}
 
             {activeSection === "search" ? (
-              <div className="grid gap-2 pr-1">
-                <label
-                  className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
-                  htmlFor={searchUrlId}
-                >
-                  Search URL template
-                </label>
-                <p className="text-xs text-muted-foreground">
-                  Template for the dashboard search box. Put{" "}
-                  <code className="rounded bg-muted px-1 py-px text-[0.7rem]">
-                    %s
-                  </code>{" "}
-                  where the encoded query goes (e.g.{" "}
-                  <code className="rounded bg-muted px-1 py-px text-[0.7rem]">
-                    https://duckduckgo.com/?q=%s
-                  </code>
-                  ). Sites cannot read your browser default engine—match what
-                  you would type in the address bar. Ignored when you open a
-                  direct URL.
-                </p>
-                <Input
-                  id={searchUrlId}
-                  type="text"
-                  spellCheck={false}
-                  autoComplete="off"
-                  value={searchUrlTemplate}
-                  onChange={(e) => setSearchUrlTemplate(e.target.value)}
-                  placeholder={DEFAULT_SEARCH_URL_TEMPLATE}
-                  className="rounded-2xl border-border/80 font-mono text-sm"
-                />
-                {!isSearchUrlTemplateValid(searchUrlTemplate) ? (
-                  <p className="text-xs text-destructive">
-                    Add %s for the query. Searches will use Google until this is
-                    fixed.
+              <div className="grid gap-4 pr-1">
+                <div className="grid gap-2">
+                  <label
+                    className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                    htmlFor={searchEngineSelectId}
+                  >
+                    Search engine
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Select the default engine used by the search box.
                   </p>
-                ) : null}
+                  <Select
+                    value={searchEngineValue}
+                    onValueChange={(value) => {
+                      if (value === "custom") {
+                        return
+                      }
+                      const engine = getSearchEngineById(
+                        value as SearchEngineId
+                      )
+                      if (engine) {
+                        setSearchUrlTemplate(engine.template)
+                      }
+                    }}
+                  >
+                    <SelectTrigger
+                      id={searchEngineSelectId}
+                      className="w-full rounded-2xl border-border/80"
+                    >
+                      <SelectValue placeholder="Choose engine" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SEARCH_ENGINES.map((engine) => (
+                        <SelectItem key={engine.id} value={engine.id}>
+                          {engine.label}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2 border-t border-border/60 pt-2">
+                  <label
+                    className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                    htmlFor={searchUrlId}
+                  >
+                    Search URL template
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Template for the dashboard search box. Put{" "}
+                    <code className="rounded bg-muted px-1 py-px text-[0.7rem]">
+                      %s
+                    </code>{" "}
+                    where the encoded query goes (e.g.{" "}
+                    <code className="rounded bg-muted px-1 py-px text-[0.7rem]">
+                      https://duckduckgo.com/?q=%s
+                    </code>
+                    ). Sites cannot read your browser default engine—match what
+                    you would type in the address bar. Ignored when you open a
+                    direct URL.
+                  </p>
+                  <Input
+                    id={searchUrlId}
+                    type="text"
+                    spellCheck={false}
+                    autoComplete="off"
+                    value={searchUrlTemplate}
+                    onChange={(e) => setSearchUrlTemplate(e.target.value)}
+                    placeholder={DEFAULT_SEARCH_URL_TEMPLATE}
+                    className="rounded-2xl border-border/80 font-mono text-sm"
+                  />
+                  {!isSearchUrlTemplateValid(searchUrlTemplate) ? (
+                    <p className="text-xs text-destructive">
+                      Add %s for the query. Searches will use Google until this
+                      is fixed.
+                    </p>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 

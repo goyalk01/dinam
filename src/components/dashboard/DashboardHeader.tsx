@@ -13,7 +13,7 @@ import {
   useSyncExternalStore,
 } from "react"
 
-// 1. IMPORTED ALL ANIMATION ICONS HERE
+// IMPORTED ALL ANIMATION ICONS HERE
 import { SettingsIcon } from "@/components/animated-icons/settings-icon"
 import { MessageSquareIcon } from "@/components/animated-icons/message-square-icon"
 import { MicIcon } from "@/components/animated-icons/mic-icon"
@@ -33,6 +33,7 @@ import {
   openGoogleSearchByImage,
   resolveNavigationHref,
 } from "@/lib/search-engine"
+import { getCreativeGreeting } from "@/utils/greetings"
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 
@@ -48,13 +49,6 @@ function getPreferredColorSchemeSnapshot(): "dark" | "light" {
 
 function getPreferredColorSchemeServerSnapshot(): "dark" | "light" {
   return "light"
-}
-
-function timeOfDayGreeting(hour: number): string {
-  if (hour >= 5 && hour < 12) return "Good morning"
-  if (hour >= 12 && hour < 17) return "Good afternoon"
-  if (hour >= 17 && hour < 22) return "Good evening"
-  return "Good night"
 }
 
 function getSpeechRecognitionCtor(): (new () => SpeechRecognition) | undefined {
@@ -201,7 +195,15 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
   }>(null)
   const timeWithPeriod = dayjs(now).format("h:mm A")
   const shortDateLine = dayjs(now).format("dddd, MMM D").toUpperCase()
-  const greeting = timeOfDayGreeting(dayjs(now).hour())
+
+ // Extract the hour to a separate variable for static dependency tracking
+    const currentHour = now.getHours()
+
+    // Memoized tracking dependency array by the exact hour to prevent jumping text variations on clock ticks
+    const greeting = useMemo(() => {
+        if (currentHour < 0) return getCreativeGreeting()
+        return getCreativeGreeting()
+    }, [currentHour])
 
   return (
     <header className="w-full">
@@ -259,7 +261,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
           {onOpenAssistant ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                {/* 1. Added the 'group' class here */}
                 <Button
                   type="button"
                   variant="ghost"
@@ -268,7 +269,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                   aria-label="Open assistant"
                   onClick={onOpenAssistant}
                 >
-                  {/* 2. Replaced with new animated icon */}
                   <MessageSquareIcon
                     size={20}
                     className="transition-colors group-hover:text-foreground"
@@ -282,7 +282,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
           ) : null}
           <Tooltip>
             <TooltipTrigger asChild>
-              {/* 2. ADDED THE 'group' CLASS TO THIS BUTTON SO HOVER TRIPPLES TO THE CHILD ICON */}
               <Button
                 type="button"
                 variant="ghost"
@@ -291,7 +290,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                 aria-label="Open settings"
                 onClick={() => setSettingsOpen(true)}
               >
-                {/* 3. REPLACED STATIC <Settings /> WITH ANIMATED ICON */}
                 <SettingsIcon
                   size={20}
                   className="transition-colors group-hover:text-foreground"
@@ -311,12 +309,20 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
       />
 
       <div className="mt-10 flex flex-col items-center text-center sm:mt-14">
-        <p className="text-6xl font-bold tracking-tight text-foreground sm:text-7xl md:text-8xl">
-          {greeting}
-        </p>
+        {/* Optimized spacing properties to compact vertical margins for wrapped lines */}
+        <div className="flex min-h-[7rem] w-full max-w-4xl items-center justify-center">
+          <p className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-5xl leading-none font-bold tracking-tight text-foreground select-none sm:text-6xl md:text-7xl lg:text-8xl">
+            <span className="inline-block max-w-3xl leading-tight text-balance">
+              {greeting.text}
+            </span>
+            <span className="manual-emoji-reset inline-block shrink-0 animate-pulse align-middle text-5xl leading-none sm:text-6xl md:text-7xl lg:text-8xl">
+              {greeting.emoji}
+            </span>
+          </p>
+        </div>
 
         <form
-          className="group/search relative mt-8 w-full max-w-xl sm:mt-10" // 1. Added group/search here
+          className="group/search relative mt-6 w-full max-w-xl sm:mt-8"
           onSubmit={handleSearchSubmit}
         >
           <label htmlFor="dashboard-search" className="sr-only">
@@ -331,7 +337,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
             aria-hidden
             onChange={handleImageSearchFile}
           />
-          {/* 2. Wrapped the icon in a hover-catcher area that matches the left input spacing */}
           <div
             className="absolute top-1/2 left-0 z-2 h-full w-14 -translate-y-1/2"
             onMouseEnter={() => searchIconRef.current?.startAnimation()}
@@ -339,7 +344,7 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
           >
             <SearchIcon
               ref={searchIconRef}
-              size={20} // 3. Added explicit sizing prop
+              size={20}
               className="pointer-events-none absolute top-1/2 left-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/search:text-foreground group-hover/search:text-foreground"
               aria-hidden
             />
@@ -374,7 +379,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                {/* 1. Added the 'group' class to let hover trigger down to the icon */}
                 <Button
                   type="button"
                   variant="ghost"
@@ -391,7 +395,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                   disabled={!speechSupported}
                   onClick={toggleVoiceSearch}
                 >
-                  {/* REMOVED className="size-5" AND PASSED size={20} AS A PROP */}
                   <MicIcon
                     size={30}
                     className={cn(

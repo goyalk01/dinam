@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+
 import {
   createContext,
   useCallback,
@@ -17,6 +18,7 @@ import {
   type QuickLaunchIconKey,
   type QuickLaunchItem,
 } from "@/data/dashboard-mock"
+
 import {
   fallbackNameFromQuickLaunchHref,
   normalizeQuickLaunchHref,
@@ -26,6 +28,10 @@ export type DashboardTodo = {
   id: string
   label: string
   done: boolean
+  startDate?: string
+  dueDate?: string
+  progress?: number
+  finishedDate?: string
 }
 
 const TODOS_KEY = "dinam-dashboard-todos"
@@ -44,16 +50,23 @@ function loadTodos(): DashboardTodo[] {
   try {
     const raw = localStorage.getItem(TODOS_KEY)
     if (!raw) return []
-    const parsed: unknown = JSON.parse(raw)
+    const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (x): x is DashboardTodo =>
-        typeof x === "object" &&
-        x !== null &&
-        typeof (x as DashboardTodo).id === "string" &&
-        typeof (x as DashboardTodo).label === "string" &&
-        typeof (x as DashboardTodo).done === "boolean"
-    )
+
+    return parsed
+      .map((item: unknown) => {
+        const x = (item as Record<string, unknown>) || {}
+        return {
+          id: String(x.id || ""),
+          label: String(x.label || ""),
+          done: Boolean(x.done),
+          startDate: x.startDate ? String(x.startDate) : "",
+          dueDate: x.dueDate ? String(x.dueDate) : "",
+          progress: typeof x.progress === "number" ? x.progress : 0,
+          finishedDate: x.finishedDate ? String(x.finishedDate) : "",
+        }
+      })
+      .filter((todo) => todo.id && todo.label)
   } catch {
     return []
   }
@@ -65,6 +78,7 @@ function loadBookmarks(): BookmarkItem[] {
     if (!raw) return [...MOCK_BOOKMARKS]
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return [...MOCK_BOOKMARKS]
+
     const next = parsed.filter(
       (x): x is BookmarkItem =>
         typeof x === "object" &&
@@ -85,6 +99,7 @@ function loadQuickLaunch(): QuickLaunchItem[] {
     if (!raw) return [...MOCK_QUICK_LAUNCH]
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return [...MOCK_QUICK_LAUNCH]
+
     const next = parsed.filter(
       (x): x is QuickLaunchItem =>
         typeof x === "object" &&
@@ -104,9 +119,14 @@ export type DashboardStateContextValue = {
   todos: DashboardTodo[]
   bookmarks: BookmarkItem[]
   quickLaunchItems: QuickLaunchItem[]
-  addTodo: (label: string) => string
+  addTodo: (
+    label: string,
+    startDate?: string,
+    dueDate?: string,
+    progress?: number
+  ) => string
   toggleTodo: (id: string) => void
-  updateTodo: (id: string, patch: { label?: string; done?: boolean }) => void
+  updateTodo: (id: string, patch: Partial<DashboardTodo>) => void
   deleteTodo: (id: string) => void
   clearCompletedTodos: () => void
   addBookmark: (title: string, href: string) => string
@@ -138,35 +158,60 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(TODOS_KEY, JSON.stringify(todos))
   }, [todos])
 
-  const addTodo = useCallback((label: string) => {
-    const trimmed = label.trim()
-    if (!trimmed) return ""
-
-    const id = newTodoId()
-
-    setTodosState((prev) => [...prev, { id, label: trimmed, done: false }])
-
-    return id
-  }, [])
+  const addTodo = useCallback(
+    (
+      label: string,
+      startDate?: string,
+      dueDate?: string,
+      progress?: number
+    ) => {
+      const trimmed = label.trim()
+      if (!trimmed) return ""
+      const id = newTodoId()
+      setTodosState((prev) => [
+        ...prev,
+        {
+          id,
+          label: trimmed,
+          done: false,
+          startDate: startDate || "",
+          dueDate: dueDate || "",
+          progress: progress || 0,
+          finishedDate: "",
+        },
+      ])
+      return id
+    },
+    []
+  )
 
   const toggleTodo = useCallback((id: string) => {
     setTodosState((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+      prev.map((t) => {
+        if (t.id !== id) return t
+        const nextDone = !t.done
+        return {
+          ...t,
+          done: nextDone,
+          progress: nextDone ? 100 : t.progress,
+          finishedDate: nextDone ? new Date().toISOString().split("T")[0] : "",
+        }
+      })
     )
   }, [])
 
   const updateTodo = useCallback(
-    (id: string, patch: { label?: string; done?: boolean }) => {
+    (id: string, patch: Partial<DashboardTodo>) => {
       setTodosState((prev) =>
         prev.map((t) => {
           if (t.id !== id) return t
-
           return {
             ...t,
-            ...(patch.label !== undefined
-              ? { label: patch.label.trim() || t.label }
-              : {}),
-            ...(patch.done !== undefined ? { done: patch.done } : {}),
+            ...patch,
+            label:
+              patch.label !== undefined
+                ? patch.label.trim() || t.label
+                : t.label,
           }
         })
       )
@@ -185,17 +230,13 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
   const addBookmark = useCallback((title: string, href: string) => {
     const t = title.trim()
     const h = href.trim()
-
     if (!t || !h) return ""
-
     const id = newBookmarkId()
-
     setBookmarksState((prev) => {
       const next = [...prev, { id, title: t, href: h }]
       localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next))
       return next
     })
-
     return id
   }, [])
 
@@ -216,33 +257,21 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
     (name: string, href: string, icon?: QuickLaunchIconKey) => {
       const hrefNorm = normalizeQuickLaunchHref(href)
       const nameTrim = name.trim()
-
       const resolvedName = nameTrim || fallbackNameFromQuickLaunchHref(hrefNorm)
-
       if (!resolvedName && hrefNorm === "#") return ""
-
       const id = `q-${crypto.randomUUID()}`
 
       setQuickLaunchState((prev) => {
         const nextIcon: QuickLaunchIconKey =
           icon ??
           QUICK_LAUNCH_ICON_POOL[prev.length % QUICK_LAUNCH_ICON_POOL.length]!
-
         const next = [
           ...prev,
-          {
-            id,
-            name: resolvedName,
-            href: hrefNorm,
-            icon: nextIcon,
-          },
+          { id, name: resolvedName, href: hrefNorm, icon: nextIcon },
         ]
-
         localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
-
         return next
       })
-
       return id
     },
     []
@@ -251,9 +280,7 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
   const removeQuickLaunchItem = useCallback((id: string) => {
     setQuickLaunchState((prev) => {
       const next = prev.filter((q) => q.id !== id)
-
       localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
-
       return next
     })
   }, [])
@@ -266,19 +293,12 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
       setQuickLaunchState((prev) => {
         const next = prev.map((q) => {
           if (q.id !== id) return q
-
           let href = q.href
-
-          if (patch.href !== undefined) {
+          if (patch.href !== undefined)
             href = normalizeQuickLaunchHref(patch.href)
-          }
-
           let name = q.name
-
-          if (patch.name !== undefined) {
+          if (patch.name !== undefined)
             name = patch.name.trim() || fallbackNameFromQuickLaunchHref(href)
-          }
-
           return {
             ...q,
             name,
@@ -286,16 +306,14 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
             ...(patch.icon !== undefined ? { icon: patch.icon } : {}),
           }
         })
-
         localStorage.setItem(QUICK_LAUNCH_KEY, JSON.stringify(next))
-
         return next
       })
     },
     []
   )
 
-  const value = useMemo<DashboardStateContextValue>(
+  const value = useMemo(
     () => ({
       todos,
       bookmarks,
@@ -339,12 +357,9 @@ export function DashboardStateProvider({ children }: { children: ReactNode }) {
 
 export function useDashboardState(): DashboardStateContextValue {
   const ctx = useContext(DashboardStateContext)
-
-  if (!ctx) {
+  if (!ctx)
     throw new Error(
       "useDashboardState must be used within DashboardStateProvider"
     )
-  }
-
   return ctx
 }
