@@ -50,11 +50,19 @@ function getPreferredColorSchemeServerSnapshot(): "dark" | "light" {
     return "light"
 }
 
-function timeOfDayGreeting(hour: number): string {
-    if (hour >= 5 && hour < 12) return "Good morning"
-    if (hour >= 12 && hour < 17) return "Good afternoon"
-    if (hour >= 17 && hour < 22) return "Good evening"
-    return "Good night"
+// HELPER: Prevents global keyboard focus shortcuts from firing when user is active inside an editor/input field
+function isEditableTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) {
+        return false
+    }
+    if (target.isContentEditable) {
+        return true
+    }
+    return Boolean(
+        target.closest(
+            "input, textarea, [contenteditable='true'], [contenteditable='']",
+        ),
+    )
 }
 
 function getSpeechRecognitionCtor():
@@ -233,7 +241,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
         [],
     )
 
-    // Robust native JS string formatting replacements 
     const timeWithPeriod = now.toLocaleTimeString(navigator.language || "en-US", {
         hour: "numeric",
         minute: "2-digit",
@@ -246,7 +253,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
         day: "numeric",
     }).toUpperCase()
     
-    // FIX: Memoize the greeting string using currentHour dependencies to completely block re-rendering calculations on matching intervals
     const currentHour = now.getHours()
     const greeting = useMemo(() => getCreativeGreeting(), [currentHour])
 
@@ -371,6 +377,14 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
                         className="h-auto rounded-full border-border/80 bg-card py-3.5 pr-28 pl-14 text-center shadow-sm placeholder:text-muted-foreground focus-visible:ring-ring/25 sm:text-left"
                     />
                     <div className="absolute top-1/2 right-2 z-1 flex -translate-y-1/2 items-center gap-0.5">
+                        {!searchFocused ? (
+                            <kbd
+                                aria-hidden
+                                className="pointer-events-none inline-flex h-5 items-center rounded-md border border-border/70 px-1.5 text-[10px] font-medium text-muted-foreground"
+                            >
+                                /
+                            </kbd>
+                        ) : null}
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
