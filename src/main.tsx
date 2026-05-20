@@ -16,5 +16,5 @@ createRoot(document.getElementById("root")!).render(
         </TooltipProvider>
       </DashboardStateProvider>
     </ThemeProvider>
-  </StrictMode>,
+  </StrictMode>
 )

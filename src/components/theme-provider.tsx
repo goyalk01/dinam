@@ -2,368 +2,358 @@
 import * as React from "react"
 
 import {
-    DEFAULT_SEARCH_URL_TEMPLATE,
-    getInitialSearchUrlTemplate,
+  DEFAULT_SEARCH_URL_TEMPLATE,
+  getInitialSearchUrlTemplate,
 } from "@/lib/search-engine"
 import {
-    ACCENT_CSS_VARS,
-    ACCENT_PRESETS,
-    isAccentId,
-    mergeAccentVariables,
-    type AccentId,
+  ACCENT_CSS_VARS,
+  ACCENT_PRESETS,
+  isAccentId,
+  mergeAccentVariables,
+  type AccentId,
 } from "@/lib/theme-accent-presets"
 
 type Theme = "dark" | "light" | "system"
 type ResolvedTheme = "dark" | "light"
 
 type ThemeProviderProps = {
-    children: React.ReactNode
-    defaultTheme?: Theme
-    storageKey?: string
-    /** localStorage key for accent / color preset (default: `theme-accent`). */
-    accentStorageKey?: string
-    defaultAccent?: AccentId
-    /** Base64 data URL or remote URL for dashboard background; persisted in localStorage. */
-    dashboardWallpaperStorageKey?: string
-    /** localStorage key for search URL template with `%s` (default: `dashboard-search-url`). */
-    searchUrlTemplateStorageKey?: string
-    /** Previous preset id storage; read once to migrate, then removed. */
-    legacySearchEngineStorageKey?: string
-    defaultSearchUrlTemplate?: string
-    disableTransitionOnChange?: boolean
+  children: React.ReactNode
+  defaultTheme?: Theme
+  storageKey?: string
+  /** localStorage key for accent / color preset (default: `theme-accent`). */
+  accentStorageKey?: string
+  defaultAccent?: AccentId
+  /** Base64 data URL or remote URL for dashboard background; persisted in localStorage. */
+  dashboardWallpaperStorageKey?: string
+  /** localStorage key for search URL template with `%s` (default: `dashboard-search-url`). */
+  searchUrlTemplateStorageKey?: string
+  /** Previous preset id storage; read once to migrate, then removed. */
+  legacySearchEngineStorageKey?: string
+  defaultSearchUrlTemplate?: string
+  disableTransitionOnChange?: boolean
 }
 
 type ThemeProviderState = {
-    theme: Theme
-    setTheme: (theme: Theme) => void
-    accent: AccentId
-    setAccent: (accent: AccentId) => void
-    /** Data URL or absolute URL; `null` clears the wallpaper. */
-    dashboardWallpaper: string | null
-    setDashboardWallpaper: (value: string | null) => void
-    /** Full URL template; use `%s` where the encoded query belongs. */
-    searchUrlTemplate: string
-    setSearchUrlTemplate: (template: string) => void
+  theme: Theme
+  setTheme: (theme: Theme) => void
+  accent: AccentId
+  setAccent: (accent: AccentId) => void
+  /** Data URL or absolute URL; `null` clears the wallpaper. */
+  dashboardWallpaper: string | null
+  setDashboardWallpaper: (value: string | null) => void
+  /** Full URL template; use `%s` where the encoded query belongs. */
+  searchUrlTemplate: string
+  setSearchUrlTemplate: (template: string) => void
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 const THEME_VALUES: Theme[] = ["dark", "light", "system"]
 
 const ThemeProviderContext = React.createContext<
-    ThemeProviderState | undefined
+  ThemeProviderState | undefined
 >(undefined)
 
 function isTheme(value: string | null): value is Theme {
-    if (value === null) {
-        return false
-    }
+  if (value === null) {
+    return false
+  }
 
-    return THEME_VALUES.includes(value as Theme)
+  return THEME_VALUES.includes(value as Theme)
 }
 
 function getSystemTheme(): ResolvedTheme {
-    if (window.matchMedia(COLOR_SCHEME_QUERY).matches) {
-        return "dark"
-    }
+  if (window.matchMedia(COLOR_SCHEME_QUERY).matches) {
+    return "dark"
+  }
 
-    return "light"
+  return "light"
 }
 
 function disableTransitionsTemporarily() {
-    const style = document.createElement("style")
-    style.appendChild(
-        document.createTextNode(
-            "*,*::before,*::after{-webkit-transition:none!important;transition:none!important}"
-        )
+  const style = document.createElement("style")
+  style.appendChild(
+    document.createTextNode(
+      "*,*::before,*::after{-webkit-transition:none!important;transition:none!important}"
     )
-    document.head.appendChild(style)
+  )
+  document.head.appendChild(style)
 
-    return () => {
-        window.getComputedStyle(document.body)
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                style.remove()
-            })
-        })
-    }
+  return () => {
+    window.getComputedStyle(document.body)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        style.remove()
+      })
+    })
+  }
 }
 
 function clearAccentInlineOverrides(root: HTMLElement) {
-    for (const key of ACCENT_CSS_VARS) {
-        root.style.removeProperty(key)
-    }
+  for (const key of ACCENT_CSS_VARS) {
+    root.style.removeProperty(key)
+  }
 }
 
-function applyAccentToDocument(
-    accent: AccentId,
-    resolvedTheme: ResolvedTheme
-) {
-    const root = document.documentElement
+function applyAccentToDocument(accent: AccentId, resolvedTheme: ResolvedTheme) {
+  const root = document.documentElement
 
-    if (accent === "neutral") {
-        clearAccentInlineOverrides(root)
-        return
-    }
+  if (accent === "neutral") {
+    clearAccentInlineOverrides(root)
+    return
+  }
 
-    const preset = ACCENT_PRESETS[accent]
-    const vars = mergeAccentVariables(preset, resolvedTheme)
+  const preset = ACCENT_PRESETS[accent]
+  const vars = mergeAccentVariables(preset, resolvedTheme)
 
-    for (const [key, value] of Object.entries(vars)) {
-        root.style.setProperty(key, value)
-    }
+  for (const [key, value] of Object.entries(vars)) {
+    root.style.setProperty(key, value)
+  }
 }
 
 export function ThemeProvider({
-    children,
-    defaultTheme = "system",
-    storageKey = "theme",
-    accentStorageKey = "theme-accent",
-    defaultAccent = "neutral",
-    dashboardWallpaperStorageKey = "dashboard-wallpaper",
-    searchUrlTemplateStorageKey = "dashboard-search-url",
-    legacySearchEngineStorageKey = "dashboard-search-engine",
-    defaultSearchUrlTemplate = DEFAULT_SEARCH_URL_TEMPLATE,
-    disableTransitionOnChange = true,
-    ...props
+  children,
+  defaultTheme = "system",
+  storageKey = "theme",
+  accentStorageKey = "theme-accent",
+  defaultAccent = "neutral",
+  dashboardWallpaperStorageKey = "dashboard-wallpaper",
+  searchUrlTemplateStorageKey = "dashboard-search-url",
+  legacySearchEngineStorageKey = "dashboard-search-engine",
+  defaultSearchUrlTemplate = DEFAULT_SEARCH_URL_TEMPLATE,
+  disableTransitionOnChange = true,
+  ...props
 }: ThemeProviderProps) {
-    const [theme, setThemeState] = React.useState<Theme>(() => {
-        const storedTheme = localStorage.getItem(storageKey)
-        if (isTheme(storedTheme)) {
-            return storedTheme
-        }
+  const [theme, setThemeState] = React.useState<Theme>(() => {
+    const storedTheme = localStorage.getItem(storageKey)
+    if (isTheme(storedTheme)) {
+      return storedTheme
+    }
 
-        return defaultTheme
-    })
+    return defaultTheme
+  })
 
-    const [accent, setAccentState] = React.useState<AccentId>(() => {
-        const stored = localStorage.getItem(accentStorageKey)
-        if (isAccentId(stored)) {
-            return stored
-        }
+  const [accent, setAccentState] = React.useState<AccentId>(() => {
+    const stored = localStorage.getItem(accentStorageKey)
+    if (isAccentId(stored)) {
+      return stored
+    }
 
-        return defaultAccent
-    })
+    return defaultAccent
+  })
 
-    const [dashboardWallpaper, setDashboardWallpaperState] = React.useState<
-        string | null
-    >(() => localStorage.getItem(dashboardWallpaperStorageKey))
+  const [dashboardWallpaper, setDashboardWallpaperState] = React.useState<
+    string | null
+  >(() => localStorage.getItem(dashboardWallpaperStorageKey))
 
-    const [searchUrlTemplate, setSearchUrlTemplateState] = React.useState(
-        () => {
-            return getInitialSearchUrlTemplate(
-                searchUrlTemplateStorageKey,
-                legacySearchEngineStorageKey,
-                defaultSearchUrlTemplate
-            )
-        }
+  const [searchUrlTemplate, setSearchUrlTemplateState] = React.useState(() => {
+    return getInitialSearchUrlTemplate(
+      searchUrlTemplateStorageKey,
+      legacySearchEngineStorageKey,
+      defaultSearchUrlTemplate
     )
+  })
 
-    const setSearchUrlTemplate = React.useCallback(
-        (next: string) => {
-            const trimmed = next.trim()
-            localStorage.setItem(searchUrlTemplateStorageKey, trimmed)
-            setSearchUrlTemplateState(trimmed)
-        },
-        [searchUrlTemplateStorageKey]
-    )
+  const setSearchUrlTemplate = React.useCallback(
+    (next: string) => {
+      const trimmed = next.trim()
+      localStorage.setItem(searchUrlTemplateStorageKey, trimmed)
+      setSearchUrlTemplateState(trimmed)
+    },
+    [searchUrlTemplateStorageKey]
+  )
 
-    const setDashboardWallpaper = React.useCallback(
-        (value: string | null) => {
-            if (value === null || value === "") {
-                localStorage.removeItem(dashboardWallpaperStorageKey)
-                setDashboardWallpaperState(null)
-                return
-            }
+  const setDashboardWallpaper = React.useCallback(
+    (value: string | null) => {
+      if (value === null || value === "") {
+        localStorage.removeItem(dashboardWallpaperStorageKey)
+        setDashboardWallpaperState(null)
+        return
+      }
 
-            localStorage.setItem(dashboardWallpaperStorageKey, value)
-            setDashboardWallpaperState(value)
-        },
-        [dashboardWallpaperStorageKey]
-    )
+      localStorage.setItem(dashboardWallpaperStorageKey, value)
+      setDashboardWallpaperState(value)
+    },
+    [dashboardWallpaperStorageKey]
+  )
 
-    const setTheme = React.useCallback(
-        (nextTheme: Theme) => {
-            localStorage.setItem(storageKey, nextTheme)
-            setThemeState(nextTheme)
-        },
-        [storageKey]
-    )
+  const setTheme = React.useCallback(
+    (nextTheme: Theme) => {
+      localStorage.setItem(storageKey, nextTheme)
+      setThemeState(nextTheme)
+    },
+    [storageKey]
+  )
 
-    const setAccent = React.useCallback(
-        (nextAccent: AccentId) => {
-            localStorage.setItem(accentStorageKey, nextAccent)
-            setAccentState(nextAccent)
-        },
-        [accentStorageKey]
-    )
+  const setAccent = React.useCallback(
+    (nextAccent: AccentId) => {
+      localStorage.setItem(accentStorageKey, nextAccent)
+      setAccentState(nextAccent)
+    },
+    [accentStorageKey]
+  )
 
-    const applyTheme = React.useCallback(
-        (nextTheme: Theme) => {
-            const root = document.documentElement
-            const resolvedTheme =
-                nextTheme === "system" ? getSystemTheme() : nextTheme
-            const restoreTransitions = disableTransitionOnChange
-                ? disableTransitionsTemporarily()
-                : null
+  const applyTheme = React.useCallback(
+    (nextTheme: Theme) => {
+      const root = document.documentElement
+      const resolvedTheme =
+        nextTheme === "system" ? getSystemTheme() : nextTheme
+      const restoreTransitions = disableTransitionOnChange
+        ? disableTransitionsTemporarily()
+        : null
 
-            root.classList.remove("light", "dark")
-            root.classList.add(resolvedTheme)
+      root.classList.remove("light", "dark")
+      root.classList.add(resolvedTheme)
 
-            if (restoreTransitions) {
-                restoreTransitions()
-            }
-        },
-        [disableTransitionOnChange]
-    )
+      if (restoreTransitions) {
+        restoreTransitions()
+      }
+    },
+    [disableTransitionOnChange]
+  )
 
-    React.useEffect(() => {
-        applyTheme(theme)
+  React.useEffect(() => {
+    applyTheme(theme)
 
-        if (theme !== "system") {
-            return undefined
+    if (theme !== "system") {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia(COLOR_SCHEME_QUERY)
+    const handleChange = () => {
+      applyTheme("system")
+    }
+
+    mediaQuery.addEventListener("change", handleChange)
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange)
+    }
+  }, [theme, applyTheme])
+
+  React.useEffect(() => {
+    const runAccent = () => {
+      const resolved: ResolvedTheme =
+        theme === "system" ? getSystemTheme() : theme
+      const restoreTransitions = disableTransitionOnChange
+        ? disableTransitionsTemporarily()
+        : null
+
+      applyAccentToDocument(accent, resolved)
+
+      if (restoreTransitions) {
+        restoreTransitions()
+      }
+    }
+
+    runAccent()
+
+    if (theme !== "system") {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia(COLOR_SCHEME_QUERY)
+    const handleChange = () => {
+      runAccent()
+    }
+
+    mediaQuery.addEventListener("change", handleChange)
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange)
+    }
+  }, [accent, disableTransitionOnChange, theme])
+
+  React.useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.storageArea !== localStorage) {
+        return
+      }
+
+      if (event.key === storageKey) {
+        if (isTheme(event.newValue)) {
+          setThemeState(event.newValue)
+        } else {
+          setThemeState(defaultTheme)
         }
+        return
+      }
 
-        const mediaQuery = window.matchMedia(COLOR_SCHEME_QUERY)
-        const handleChange = () => {
-            applyTheme("system")
+      if (event.key === accentStorageKey) {
+        if (isAccentId(event.newValue)) {
+          setAccentState(event.newValue)
+        } else {
+          setAccentState(defaultAccent)
         }
+        return
+      }
 
-        mediaQuery.addEventListener("change", handleChange)
+      if (event.key === dashboardWallpaperStorageKey) {
+        setDashboardWallpaperState(
+          event.newValue && event.newValue !== "" ? event.newValue : null
+        )
+        return
+      }
 
-        return () => {
-            mediaQuery.removeEventListener("change", handleChange)
+      if (event.key === searchUrlTemplateStorageKey) {
+        if (event.newValue !== null && event.newValue.trim() !== "") {
+          setSearchUrlTemplateState(event.newValue.trim())
+        } else {
+          setSearchUrlTemplateState(defaultSearchUrlTemplate)
         }
-    }, [theme, applyTheme])
+      }
+    }
 
-    React.useEffect(() => {
-        const runAccent = () => {
-            const resolved: ResolvedTheme =
-                theme === "system" ? getSystemTheme() : theme
-            const restoreTransitions = disableTransitionOnChange
-                ? disableTransitionsTemporarily()
-                : null
+    window.addEventListener("storage", handleStorageChange)
 
-            applyAccentToDocument(accent, resolved)
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
+  }, [
+    accentStorageKey,
+    dashboardWallpaperStorageKey,
+    defaultAccent,
+    defaultSearchUrlTemplate,
+    defaultTheme,
+    searchUrlTemplateStorageKey,
+    storageKey,
+  ])
 
-            if (restoreTransitions) {
-                restoreTransitions()
-            }
-        }
+  const value = React.useMemo(
+    () => ({
+      theme,
+      setTheme,
+      accent,
+      setAccent,
+      dashboardWallpaper,
+      setDashboardWallpaper,
+      searchUrlTemplate,
+      setSearchUrlTemplate,
+    }),
+    [
+      accent,
+      dashboardWallpaper,
+      searchUrlTemplate,
+      setAccent,
+      setDashboardWallpaper,
+      setSearchUrlTemplate,
+      setTheme,
+      theme,
+    ]
+  )
 
-        runAccent()
-
-        if (theme !== "system") {
-            return undefined
-        }
-
-        const mediaQuery = window.matchMedia(COLOR_SCHEME_QUERY)
-        const handleChange = () => {
-            runAccent()
-        }
-
-        mediaQuery.addEventListener("change", handleChange)
-
-        return () => {
-            mediaQuery.removeEventListener("change", handleChange)
-        }
-    }, [accent, disableTransitionOnChange, theme])
-
-    React.useEffect(() => {
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.storageArea !== localStorage) {
-                return
-            }
-
-            if (event.key === storageKey) {
-                if (isTheme(event.newValue)) {
-                    setThemeState(event.newValue)
-                } else {
-                    setThemeState(defaultTheme)
-                }
-                return
-            }
-
-            if (event.key === accentStorageKey) {
-                if (isAccentId(event.newValue)) {
-                    setAccentState(event.newValue)
-                } else {
-                    setAccentState(defaultAccent)
-                }
-                return
-            }
-
-            if (event.key === dashboardWallpaperStorageKey) {
-                setDashboardWallpaperState(
-                    event.newValue && event.newValue !== ""
-                        ? event.newValue
-                        : null
-                )
-                return
-            }
-
-            if (event.key === searchUrlTemplateStorageKey) {
-                if (
-                    event.newValue !== null &&
-                    event.newValue.trim() !== ""
-                ) {
-                    setSearchUrlTemplateState(event.newValue.trim())
-                } else {
-                    setSearchUrlTemplateState(defaultSearchUrlTemplate)
-                }
-            }
-        }
-
-        window.addEventListener("storage", handleStorageChange)
-
-        return () => {
-            window.removeEventListener("storage", handleStorageChange)
-        }
-    }, [
-        accentStorageKey,
-        dashboardWallpaperStorageKey,
-        defaultAccent,
-        defaultSearchUrlTemplate,
-        defaultTheme,
-        searchUrlTemplateStorageKey,
-        storageKey,
-    ])
-
-    const value = React.useMemo(
-        () => ({
-            theme,
-            setTheme,
-            accent,
-            setAccent,
-            dashboardWallpaper,
-            setDashboardWallpaper,
-            searchUrlTemplate,
-            setSearchUrlTemplate,
-        }),
-        [
-            accent,
-            dashboardWallpaper,
-            searchUrlTemplate,
-            setAccent,
-            setDashboardWallpaper,
-            setSearchUrlTemplate,
-            setTheme,
-            theme,
-        ]
-    )
-
-    return (
-        <ThemeProviderContext.Provider {...props} value={value}>
-            {children}
-        </ThemeProviderContext.Provider>
-    )
+  return (
+    <ThemeProviderContext.Provider {...props} value={value}>
+      {children}
+    </ThemeProviderContext.Provider>
+  )
 }
 
 export const useTheme = () => {
-    const context = React.useContext(ThemeProviderContext)
+  const context = React.useContext(ThemeProviderContext)
 
-    if (context === undefined) {
-        throw new Error("useTheme must be used within a ThemeProvider")
-    }
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider")
+  }
 
-    return context
+  return context
 }
