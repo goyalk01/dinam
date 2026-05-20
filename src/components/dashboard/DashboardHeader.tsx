@@ -34,6 +34,7 @@ import {
   openGoogleSearchByImage,
   resolveNavigationHref,
 } from "@/lib/search-engine"
+import { useWeather } from "@/hooks/use-weather"
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 
@@ -125,19 +126,7 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
   const resolvedTheme: "dark" | "light" =
     theme === "system" ? systemPref : theme
 
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 1000)
-    return () => window.clearInterval(id)
-  }, [])
-
-  const [weather, setWeather] = useState({
-    city: "",
-    temperature: 0,
-    weatherCode: 0,
-  })
-
-  const [weatherLoading, setWeatherLoading] = useState(true)
-  const [weatherError, setWeatherError] = useState("")
+  const { weather, weatherLoading, weatherError } = useWeather()
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 1000)
@@ -145,61 +134,10 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
   }, [])
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-
-        try {
-          const weatherResponse = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
-          )
-
-          if (!weatherResponse.ok) {
-            throw new Error("Failed to fetch weather")
-          }
-
-          const weatherData = await weatherResponse.json()
-
-          console.log("Weather API:", weatherData)
-
-          const currentWeather = weatherData.current_weather
-
-          if (!currentWeather) {
-            throw new Error("No weather data received")
-          }
-
-          setWeather({
-            city: "Pune, Maharashtra",
-            temperature: currentWeather.temperature ?? 0,
-            weatherCode: currentWeather.weathercode ?? 0,
-          })
-        } catch (error) {
-          console.error("Weather Error:", error)
-          setWeatherError("Unable to fetch weather")
-        } finally {
-          setWeatherLoading(false)
-        }
-      },
-      (error) => {
-        console.error(error)
-
-        if (error.code === 1) {
-          setWeatherError("Location permission denied")
-        } else if (error.code === 2) {
-          setWeatherError("Location unavailable")
-        } else {
-          setWeatherError("Location timeout")
-        }
-
-        setWeatherLoading(false)
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
-    )
+    const id = window.setInterval(() => setNow(new Date()), 1000)
+    return () => window.clearInterval(id)
   }, [])
+
   useEffect(() => {
     return () => {
       speechRecognitionRef.current?.abort()
