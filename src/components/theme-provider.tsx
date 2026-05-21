@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 
+
+
 import {
   DEFAULT_SEARCH_URL_TEMPLATE,
   getInitialSearchUrlTemplate,

@@ -1,6 +1,22 @@
 <!doctype html>
 <html lang="en">
   <head>
+  <script>
+    // Runs synchronously before the browser paints anything.
+    // Must stay inline so there is no network round-trip delay.
+    (function () {
+      var STORAGE_KEY = 'theme';
+      var saved = localStorage.getItem(STORAGE_KEY); // 'light' | 'dark' | 'system' | null
+      var preference = saved === 'light' || saved === 'dark' ? saved : 'system';
+
+      var isDark =
+        preference === 'dark' ||
+        (preference === 'system' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+      document.documentElement.classList.toggle('dark', isDark);
+    })();
+  </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
