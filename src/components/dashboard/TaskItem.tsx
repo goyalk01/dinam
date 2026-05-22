@@ -88,6 +88,7 @@ export function TaskItem({
               onKeyDown={(e) => {
                 if (e.key === "Enter") onCommitEdit()
               }}
+              aria-label="Edit task title"
               className="min-w-0 flex-1 rounded-lg border border-border bg-card px-3 py-1 text-sm font-medium text-card-foreground outline-none focus:border-primary"
               autoFocus
             />
@@ -175,6 +176,7 @@ export function TaskItem({
               type="date"
               value={editStartDate}
               onChange={(e) => setEditStartDate(e.target.value)}
+              aria-label="Edit start date"
               className="rounded border border-border/60 bg-card px-2 py-0.5 font-mono text-xs text-foreground outline-none"
             />
           </div>
@@ -185,6 +187,7 @@ export function TaskItem({
               type="date"
               value={editDueDate}
               onChange={(e) => setEditDueDate(e.target.value)}
+              aria-label="Edit due date"
               className="rounded border border-border/60 bg-card px-2 py-0.5 font-mono text-xs text-foreground outline-none"
             />
           </div>
