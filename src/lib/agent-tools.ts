@@ -711,11 +711,20 @@ export async function executeAgentTool(
     case "browser_open_url": {
       const url = str(args.url)
       if (!url) return { error: "url required" }
+      let parsed: URL
+      try {
+        parsed = new URL(url)
+      } catch {
+        return { error: "invalid url" }
+      }
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        return { error: "only http(s) URLs allowed" }
+      }
       const newTab = args.new_tab !== undefined ? bool(args.new_tab) : true
       if (newTab !== false) {
-        window.open(url, "_blank", "noopener,noreferrer")
+        window.open(parsed.href, "_blank", "noopener,noreferrer")
       } else {
-        window.location.assign(url)
+        window.location.assign(parsed.href)
       }
       return { ok: true }
     }
