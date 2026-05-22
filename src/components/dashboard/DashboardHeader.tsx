@@ -134,11 +134,6 @@ export function DashboardHeader({ onOpenAssistant }: DashboardHeaderProps) {
   }, [])
 
   useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 1000)
-    return () => window.clearInterval(id)
-  }, [])
-
-  useEffect(() => {
     return () => {
       speechRecognitionRef.current?.abort()
       speechRecognitionRef.current = null
