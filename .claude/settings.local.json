@@ -4,7 +4,9 @@
       "Bash(Get-ChildItem -Path \"e:\\\\Workspace\\\\dinam\" -Force)",
       "Bash(Select-Object Name)",
       "Bash(git config *)",
-      "WebFetch(domain:polyformproject.org)"
+      "WebFetch(domain:polyformproject.org)",
+      "Bash(ls -la \"e:\\\\Workspace\\\\dinam\\\\\" | head -30)",
+      "Read(//e/Workspace/**)"
     ]
   }
 }

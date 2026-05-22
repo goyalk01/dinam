@@ -10,6 +10,7 @@ Read the [README](./README.md) first to understand the project.
 
 - [Code of Conduct](#code-of-conduct)
 - [First-Time Contributors](#first-time-contributors)
+- [Issue Assignment](#issue-assignment)
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
 - [Building a Widget](#building-a-widget)
@@ -38,6 +39,45 @@ Never contributed to open source before? Start here:
 2. Comment on the issue to claim it before starting work
 3. Ask questions in the issue thread — that's what it's for
 4. Don't worry about perfection on your first PR; we'll guide you
+
+---
+
+## Issue Assignment
+
+**Before writing any code, claim the issue.**
+
+### Claiming an issue
+
+1. Find an open, unassigned issue
+2. Comment: _"I'd like to work on this"_ (or similar)
+3. Wait for a maintainer to assign it to you — don't start until assigned
+4. Once assigned, open your PR within **7 days**
+
+### Rules
+
+| Rule | Detail |
+|------|--------|
+| One issue at a time | Everyone — finish or release your current issue before claiming another |
+| Wait for assignment | Don't open a PR until a maintainer has officially assigned the issue to you |
+| Stay responsive | Reply to questions on your issue within **3 days** |
+| Inactivity = unassignment | No update for **3 days** after assignment → maintainer may reassign |
+| Can't continue? | Comment on the issue to release it so others can pick it up |
+
+### Unassigned PRs
+
+PRs opened before official assignment will be **closed**, regardless of whether you commented to claim the issue.
+
+> "I commented but wasn't assigned yet" is not an exception — wait for the assignment confirmation, then open your PR.
+
+Maintainers will leave a comment explaining this so you can re-open after assignment.
+
+### First-time contributors
+
+Stick to issues labeled [`good first issue`](https://github.com/AshutoshDash1999/dinam/issues?q=is%3Aissue+label%3A%22good+first+issue%22) for your first contribution.
+
+### Maintainers
+
+Maintainers may self-assign issues without prior comment.
 
 ---
 
