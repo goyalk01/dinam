@@ -1,5 +1,4 @@
 # Dinam
-
 [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE)
 
 Dinam is a **Chrome extension** that replaces your **new tab** page with a personal dashboard. It brings quick launch shortcuts, bookmarks, a daily quote, tasks, and a tech news column into one responsive layout. Appearance is customizable: theme accents, optional wallpaper, and layout-adjacent settings live in the dashboard header.
@@ -7,6 +6,18 @@ Dinam is a **Chrome extension** that replaces your **new tab** page with a perso
 Data for bookmarks, tasks, news, and quick launch items is currently driven by mock modules under `src/data/`—a natural place to swap in real APIs, `chrome.storage`, or other persistence later.
 
 If Dinam is useful to you, **star this repository on GitHub** — it helps others discover the project and keeps us motivated to improve it.
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Fork & Clone Repository](#fork--clone-repository)
+- [Getting Started](#getting-started)
+- [Run Locally](#run-locally)
+- [Load as Chrome Extension](#load-as-chrome-extension)
+- [Project Layout](#project-layout)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
@@ -19,49 +30,76 @@ If Dinam is useful to you, **star this repository on GitHub** — it helps other
 - **Tech news** — Headlines column (mock data)
 - **Theming** — Light/dark/system, accent presets, optional background wallpaper
 
-## Tech stack
+## Tech Stack
 
 - [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - [Vite 7](https://vite.dev/)
 - [Tailwind CSS 4](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/) (Radix primitives, `class-variance-authority`, `tailwind-merge`)
 
+## Fork & Clone Repository
+1. Fork this repository
+
+2. Clone your fork
+```bash
+git clone https://github.com/<your-username>/dinam.git
+cd dinam
+```
+3. Add upstream remote (optional)
+```bash
+git remote add upstream https://github.com/AshutoshDash1999/dinam.git
+```
+
 ## Getting started
 
 **Requirements:** Node.js compatible with the versions in `package.json` (recent LTS recommended).
 
-### UI development (browser)
+## Run Locally
+
+### 1. Install dependencies
 
 ```bash
 npm install
+```
+
+### 2. Start the development server
+```
 npm run dev
 ```
 
 Open the URL Vite prints (usually `http://localhost:5173`) for fast refresh while you work on the dashboard UI.
 
-### Load as an unpacked extension in Chrome
+## Load as Chrome Extension
 
-The new tab page is the same React app you build with Vite. To test it inside Chrome:
+Dinam can also be tested as a Chrome new-tab extension.
 
-1. **Build** the app:
+### 1. Build the project
 
-   ```bash
-   npm run build
-   ```
+```bash
+npm run build
+```
 
-   Output goes to `dist/` (HTML, JS, and assets).
+The production-ready files will be generated inside the `dist/` folder.
 
-2. **Manifest** — Package `dist/` as a [Manifest V3](https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation) extension. You need at least:
+### 2. Open Chrome Extensions
 
-   - `manifest_version`: **3**
-   - `chrome_url_overrides.newtab` pointing at your built entry (typically `"newtab": "index.html"` if `index.html` lives at the root of the extension folder)
-   - Appropriate `permissions` / host access if you later call external APIs or use `chrome.*` APIs
+Open the following URL in Chrome:
 
-   Place `manifest.json` alongside the built files (e.g. copy it into `dist/` after build, or configure Vite to emit it into `dist/`).
+```text
+chrome://extensions
+```
 
-3. In Chrome, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and select the folder that contains `manifest.json` and the built `index.html`.
+Enable **Developer Mode** using the toggle in the top-right corner.
 
-After code changes, run `npm run build` again and refresh the extension on the extensions page (or reload the new tab) to see updates.
+### 3. Load the Extension
+
+Click **Load unpacked** and select the `dist/` folder containing the built files and `manifest.json`.
+
+### 4. Open a New Tab
+
+Once loaded successfully, opening a new Chrome tab will display the Dinam dashboard.
+
+After making changes, rebuild the project and reload the unpacked extension to view updates.
 
 ### Scripts
 
@@ -88,13 +126,17 @@ Components are added under `src/components/ui` and imported with the `@/` alias,
 import { Button } from "@/components/ui/button"
 ```
 
-## Project layout (high level)
 
-- `src/App.tsx` — Dashboard shell and section grid (new tab UI)
-- `src/components/dashboard/` — Feature sections (header, quick launch, tasks, etc.)
-- `src/components/ui/` — shadcn-style primitives
-- `src/data/` — Mock dashboard content
-- `src/lib/` — Utilities, theme accents, search helpers
+## Project layout
+```text
+src/
+├── components/
+│   ├── dashboard/      # Dashboard widgets and sections
+│   ├── ui/             # Reusable UI primitives
+├── data/               # Mock/static dashboard data
+├── lib/                # Utility helpers and theme logic
+├── App.tsx             # Main dashboard layout
+```
 
 ## Contributing
 
@@ -105,12 +147,10 @@ We welcome issues and pull requests. Please keep changes focused and consistent 
 1. **Discuss larger changes** — For new features or structural refactors, open an issue first so direction and scope align.
 2. **One topic per PR** — Easier to review and bisect than mixed unrelated edits.
 3. **Run checks locally:**
-
    ```bash
    npm run lint
    npm run typecheck
    ```
-
    Fix any new warnings or errors. Use `npm run format` so TS/TSX matches Prettier (including Tailwind class sorting).
 
 4. **Match the codebase** — Follow existing naming, file organization, and import style (`@/` alias, imports at top of file). Avoid drive-by refactors outside your change.
