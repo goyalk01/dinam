@@ -168,7 +168,15 @@ export function QuickLaunchEditModal({
           </div>
         ) : null}
         <DialogFooter className="mt-6">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => {
+              setErrorMessage(null)
+              onClose()
+            }} 
+            disabled={isSaving}
+          >
             Cancel
           </Button>
           <Button 
