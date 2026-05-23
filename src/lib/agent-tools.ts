@@ -1,21 +1,6 @@
 import type { DashboardStateContextValue } from "@/context/dashboard-state"
-import type { QuickLaunchIconKey } from "@/data/dashboard-mock"
 import { AI_PROVIDER_API_KEY_STORAGE_KEY } from "@/lib/ai-provider-settings"
 import { isAccentId, type AccentId } from "@/lib/theme-accent-presets"
-
-const QUICK_LAUNCH_ICONS: readonly QuickLaunchIconKey[] = [
-  "mail",
-  "file",
-  "calendar",
-  "terminal",
-  "folder",
-  "music",
-  "camera",
-] as const
-
-function isQuickLaunchIconKey(v: string): v is QuickLaunchIconKey {
-  return (QUICK_LAUNCH_ICONS as readonly string[]).includes(v)
-}
 
 export type AgentThemeBridge = {
   theme: "dark" | "light" | "system"
@@ -184,7 +169,7 @@ export const AGENT_TOOL_DEFINITIONS: Record<string, unknown>[] = [
     type: "function",
     function: {
       name: "dashboard_list_quick_launch",
-      description: "List quick-launch shortcuts (name, href, icon, id).",
+      description: "List quick-launch shortcuts (title, url, id).",
       parameters: { type: "object", properties: {} },
     },
   },
@@ -193,15 +178,14 @@ export const AGENT_TOOL_DEFINITIONS: Record<string, unknown>[] = [
     function: {
       name: "dashboard_add_quick_launch",
       description:
-        "Add a shortcut to the quick-launch grid. Icon optional: mail, file, calendar, terminal, folder, music, camera.",
+        "Add a shortcut to the quick-launch grid.",
       parameters: {
         type: "object",
         properties: {
-          name: { type: "string" },
-          href: { type: "string" },
-          icon: { type: "string" },
+          title: { type: "string" },
+          url: { type: "string" },
         },
-        required: ["name", "href"],
+        required: ["title", "url"],
       },
     },
   },
@@ -221,14 +205,13 @@ export const AGENT_TOOL_DEFINITIONS: Record<string, unknown>[] = [
     type: "function",
     function: {
       name: "dashboard_update_quick_launch",
-      description: "Update name, href, and/or icon for a quick-launch item.",
+      description: "Update title and/or url for a quick-launch item.",
       parameters: {
         type: "object",
         properties: {
           id: { type: "string" },
-          name: { type: "string" },
-          href: { type: "string" },
-          icon: { type: "string" },
+          title: { type: "string" },
+          url: { type: "string" },
         },
         required: ["id"],
       },
@@ -630,12 +613,9 @@ export async function executeAgentTool(
     case "dashboard_list_quick_launch":
       return { items: d.quickLaunchItems }
     case "dashboard_add_quick_launch": {
-      const name = str(args.name) ?? ""
-      const href = str(args.href) ?? ""
-      const iconRaw = str(args.icon)
-      const icon =
-        iconRaw && isQuickLaunchIconKey(iconRaw) ? iconRaw : undefined
-      const id = d.addQuickLaunchItem(name, href, icon)
+      const title = str(args.title) ?? ""
+      const url = str(args.url) ?? ""
+      const id = d.addQuickLaunchItem(title, url)
       return id ? { id } : { error: "invalid shortcut" }
     }
     case "dashboard_remove_quick_launch": {
@@ -648,21 +628,16 @@ export async function executeAgentTool(
       const id = str(args.id)
       if (!id) return { error: "id required" }
       const patch: Partial<{
-        name: string
-        href: string
-        icon: QuickLaunchIconKey
+        title: string
+        url: string
       }> = {}
-      if (args.name !== undefined) {
-        const n = str(args.name)
-        if (n !== undefined) patch.name = n
+      if (args.title !== undefined) {
+        const t = str(args.title)
+        if (t !== undefined) patch.title = t
       }
-      if (args.href !== undefined) {
-        const h = str(args.href)
-        if (h !== undefined) patch.href = h
-      }
-      if (args.icon !== undefined) {
-        const ic = str(args.icon)
-        if (ic && isQuickLaunchIconKey(ic)) patch.icon = ic
+      if (args.url !== undefined) {
+        const u = str(args.url)
+        if (u !== undefined) patch.url = u
       }
       d.updateQuickLaunchItem(id, patch)
       return { ok: true }

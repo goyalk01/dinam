@@ -13,42 +13,13 @@ export type CalendarEventMock = {
   title: string
 }
 
-export type QuickLaunchIconKey =
-  | "mail"
-  | "file"
-  | "calendar"
-  | "terminal"
-  | "folder"
-  | "music"
-  | "camera"
-  | "scan"
-  | "sun"
-  | "brightness"
-  | "moon"
-  | "dark"
-
 export type QuickLaunchItem = {
   id: string
-  name: string
-  href: string
-  icon: QuickLaunchIconKey
+  title: string
+  url: string
+  description?: string
+  favicon?: string
 }
-
-/** Icons assigned to new slots by order (cycles). */
-export const QUICK_LAUNCH_ICON_POOL: readonly QuickLaunchIconKey[] = [
-  "mail",
-  "file",
-  "calendar",
-  "terminal",
-  "folder",
-  "music",
-  "camera",
-  "scan",
-  "sun",
-  "brightness",
-  "moon",
-  "dark",
-] as const
 
 export type BookmarkItem = {
   id: string
@@ -91,18 +62,10 @@ export const MOCK_CALENDAR: CalendarEventMock[] = [
 ]
 
 export const MOCK_QUICK_LAUNCH: QuickLaunchItem[] = [
-  { id: "q1", name: "Mail", href: "https://mail.google.com", icon: "mail" },
-  { id: "q2", name: "Documents", href: "https://notion.so", icon: "file" },
-  {
-    id: "q3",
-    name: "Calendar",
-    href: "https://calendar.google.com",
-    icon: "calendar",
-  },
-  { id: "q4", name: "Terminal", href: "https://github.com", icon: "terminal" },
-  { id: "q5", name: "Files", href: "#", icon: "folder" },
-  { id: "q6", name: "Music", href: "#", icon: "music" },
-  { id: "q7", name: "Camera", href: "#", icon: "camera" },
+  { id: "q1", title: "Mail", url: "https://mail.google.com", favicon: "https://www.google.com/s2/favicons?domain=mail.google.com&sz=64" },
+  { id: "q2", title: "Documents", url: "https://notion.so", favicon: "https://www.google.com/s2/favicons?domain=notion.so&sz=64" },
+  { id: "q3", title: "Calendar", url: "https://calendar.google.com", favicon: "https://www.google.com/s2/favicons?domain=calendar.google.com&sz=64" },
+  { id: "q4", title: "Terminal", url: "https://github.com", favicon: "https://www.google.com/s2/favicons?domain=github.com&sz=64" },
 ]
 
 export const MOCK_BOOKMARKS: BookmarkItem[] = [
@@ -130,12 +93,3 @@ export const MOCK_BOOKMARKS: BookmarkItem[] = [
 
 export const MOCK_STREAK_DAYS = 5
 
-export type QuickLinkItem = {
-  id: string
-  url: string
-  title: string
-  description: string
-  favicon: string
-}
-
-export const MOCK_QUICK_LINKS: QuickLinkItem[] = []

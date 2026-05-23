@@ -5,7 +5,7 @@ import { BookmarksSection } from "@/components/dashboard/BookmarksSection"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { QuoteCard } from "@/components/dashboard/QuoteCard"
 import { QuickLaunchPanel } from "@/components/dashboard/QuickLaunchPanel"
-import { QuickLinksSection } from "@/components/dashboard/QuickLinksSection"
+
 import { TasksSection } from "@/components/dashboard/TasksSection"
 import { TechNewsSection } from "@/components/dashboard/TechNewsSection"
 import { useTheme } from "@/components/theme-provider"
@@ -45,7 +45,7 @@ const App = () => {
           <div className="flex flex-col gap-6 lg:col-span-3">
             <QuickLaunchPanel />
             <BookmarksSection />
-            <QuickLinksSection />
+
           </div>
           <div className="flex flex-col gap-6 lg:col-span-5">
             <QuoteCard />
