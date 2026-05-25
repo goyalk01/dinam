@@ -29,10 +29,31 @@ export const MOCK_CALENDAR: CalendarEventMock[] = [
 ]
 
 export const MOCK_QUICK_LAUNCH: QuickLaunchItem[] = [
-  { id: "q1", title: "Mail", url: "https://mail.google.com", favicon: "https://www.google.com/s2/favicons?domain=mail.google.com&sz=64" },
-  { id: "q2", title: "Documents", url: "https://notion.so", favicon: "https://www.google.com/s2/favicons?domain=notion.so&sz=64" },
-  { id: "q3", title: "Calendar", url: "https://calendar.google.com", favicon: "https://www.google.com/s2/favicons?domain=calendar.google.com&sz=64" },
-  { id: "q4", title: "Terminal", url: "https://github.com", favicon: "https://www.google.com/s2/favicons?domain=github.com&sz=64" },
+  {
+    id: "q1",
+    title: "Mail",
+    url: "https://mail.google.com",
+    favicon: "https://www.google.com/s2/favicons?domain=mail.google.com&sz=64",
+  },
+  {
+    id: "q2",
+    title: "Documents",
+    url: "https://notion.so",
+    favicon: "https://www.google.com/s2/favicons?domain=notion.so&sz=64",
+  },
+  {
+    id: "q3",
+    title: "Calendar",
+    url: "https://calendar.google.com",
+    favicon:
+      "https://www.google.com/s2/favicons?domain=calendar.google.com&sz=64",
+  },
+  {
+    id: "q4",
+    title: "Terminal",
+    url: "https://github.com",
+    favicon: "https://www.google.com/s2/favicons?domain=github.com&sz=64",
+  },
 ]
 
 export const MOCK_BOOKMARKS: BookmarkItem[] = [
@@ -68,5 +89,5 @@ export const MOCK_WEATHER = {
   city: "Ghaziabad",
   summary: "Partly Cloudy",
   humidity: 62,
-  windSpeed: 12
-};
+  windSpeed: 12,
+}
