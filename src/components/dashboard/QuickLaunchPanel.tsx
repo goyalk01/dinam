@@ -11,8 +11,10 @@ import {
 import { Globe } from "lucide-react"
 import { fetchQuickLinkMetadata, normalizeUrl } from "@/lib/quick-link-metadata"
 import { cn } from "@/lib/utils"
-import { useDashboardState } from "@/context/dashboard-state"
-import type { QuickLaunchItem } from "@/data/dashboard-mock"
+import {
+  useDashboardState,
+  type QuickLaunchItem,
+} from "@/context/dashboard-state"
 
 import {
   QuickLaunchEditModal,
